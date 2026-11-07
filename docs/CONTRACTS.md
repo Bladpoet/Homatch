@@ -105,8 +105,31 @@ export interface MatchSummary {
 export type AppEvent =
   | { type: 'match'; match: Match; summary: MatchSummary }
   | { type: 'message'; message: Message }
-  | { type: 'like'; listingId: string; tenantId: string };  // a tenant liked a listing → refresh the landlord deck
+  | { type: 'like'; listingId: string; tenantId: string }  // a tenant liked a listing → refresh the landlord deck
+  | { type: 'reset' };                                      // demo data was reset → refetch everything
 ```
+
+## How the code is laid out (as built)
+| File | What it is |
+|---|---|
+| `src/lib/types.ts` | The types above |
+| `src/lib/api.ts` | **The only import for UI code.** It re-exports the active adapter's functions. |
+| `src/lib/adapters/types.ts` | The `DataAdapter` interface that every backend implements |
+| `src/lib/adapters/mock.ts` | The localStorage, sessionStorage and BroadcastChannel backend (the default) |
+| `src/lib/engine.ts` | **Pure** matching logic over `DbState`: decks, `applySwipe`, undo, summaries. The Supabase adapter can reuse it for ordering. |
+| `src/lib/score.ts` | The fit score |
+| `src/lib/fixtures.ts` | `DbState` and `createSeed()` |
+| `src/lib/hooks.ts` | `useCurrentUser`, `useRequireUser`, `useAppEvents(userId, handler)`, and `useAsync(fn, deps)`, which returns `{ data, loading, reload, setData }`. `setData` accepts an updater function. |
+| `src/lib/session.tsx` | `useUser()`: the signed-in user, which is non-null anywhere under `(app)/` |
+| `src/lib/format.ts` | Money, dates, relative time, `newId()` |
+| `src/styles/motion.ts` | Springs and durations for `motion` |
+| `src/components/deck/deck.config.ts` | The swipe gesture numbers |
+
+**Realtime semantics:** `subscribe()` delivers events in the sender's own tab too, synchronously, as well as to other tabs. **Always dedupe by id.** `swipe()` also returns the match directly.
+
+**Mock adapter gotcha (already handled):** Chromium updates localStorage across tabs asynchronously, so a broadcast can arrive before the data it announces. Every write stamps `DbState.rev`, each event carries that rev, and receivers wait until their storage catches up. Keep this in place if you touch `mock.ts`.
+
+**Overlays:** on desktop, `PhoneFrame` has a `transform`, so `position: fixed` stays inside the phone. Use `fixed inset-0` for sheets and overlays. If you need a portal, render it into `#overlay-root`, never `document.body`.
 
 ## Data API (`src/lib/api.ts`)
 All functions are async. The UI imports **only** from here.
@@ -114,7 +137,7 @@ All functions are async. The UI imports **only** from here.
 // session (persona switcher)
 listPersonas(): Promise<Profile[]>
 getCurrentUser(): Promise<Profile | null>
-setCurrentUser(profileId: string): Promise<void>
+setCurrentUser(profileId: string | null): Promise<void>   // null = sign out
 resetDemo(): Promise<void>
 
 // tenant
@@ -135,6 +158,7 @@ undoLastSwipe(actorId: string): Promise<void>
 
 // matches and chat
 getMatches(userId: string): Promise<MatchSummary[]>
+getMatch(matchId: string, viewerId: string): Promise<MatchSummary>
 getMessages(matchId: string): Promise<Message[]>
 sendMessage(matchId: string, senderId: string, body: string): Promise<Message>
 markRead(matchId: string, userId: string): Promise<void>
@@ -147,6 +171,9 @@ subscribe(userId: string, handler: (e: AppEvent) => void): () => void   // retur
 C0 creates a stub for each of these, with exactly these props. Owners replace the stubs with the real components and **keep the props**. You may add optional props, but never change existing ones.
 ```ts
 // components/deck  (Jazz)
+// SwipeDeck is CONTROLLED: items[0] is the top card. It calls onSwipe once the card has
+// committed (after the fly-out). The PARENT removes the item; for rewind, the parent puts it back.
+// Drag, buttons and keyboard must all go through the same commit path.
 SwipeDeck<T>: {
   items: T[];
   getKey: (item: T) => string;
@@ -189,9 +216,9 @@ Composer:   { onSend: (body: string) => void; quickReplies?: string[] }
 - **Match:** a match exists for `(listingId, tenantId)` when there is a tenant swipe `right` **and** a landlord swipe `right` on that pair. Whichever swipe completes the pair creates the match. Both parties receive a `match` event. `swipe()` also returns the match, so the swiper can show the overlay immediately without waiting for the event.
 - **Tenant deck:** listings the tenant hasn't swiped yet, sorted by `fit.score` (highest first). Hide listings with `score < 30`.
 - **Landlord deck** for a listing:
-  1. **liked-you:** tenants who swiped right on this listing and whom the landlord hasn't swiped yet, sorted by fit (highest first)
+  1. **liked-you:** tenants who swiped right on this listing and whom the landlord hasn't swiped yet, sorted **newest like first**, so a like that arrives live lands on top
   2. one `{ kind: 'divider' }` item, **only if** both sections are non-empty
-  3. **discover:** tenants with `fit.score >= 50` who aren't in section 1 and whom the landlord hasn't swiped for this listing, sorted by fit (highest first)
+  3. **discover:** tenants with `fit.score >= 50` who aren't in section 1, whom the landlord hasn't swiped for this listing, and **who haven't already passed on it** (they could never match), sorted by fit (highest first)
 - **Undo** removes the actor's most recent swipe. If that swipe created a match, delete the match too. Demo only.
 
 ## Fit score (`src/lib/score.ts`)
@@ -206,7 +233,12 @@ Composer:   { onSend: (body: string) => void; quickReplies?: string[] }
 | Pets | 10 | `!pets \|\| petsAllowed` | "Pets OK" / "No pets" |
 | Lease | 5 | `leaseMonths <= prefs.leaseMonths + 6` | "{n}-month lease" |
 
-The UI shows the top 3 reasons, with `ok: true` reasons first.
+The UI shows the top 3 reasons, with `ok: true` reasons first (`topReasons(fit)`).
+
+**Caps**, so the wrong people never fill a deck:
+- A listing in a **different region** from all of the tenant's areas is capped at **25**, which is below the tenant deck's minimum.
+- Rent **more than 10% over budget** is capped at **40**, which is below the Discover minimum.
+- A tenant with **no areas** counts as "Anywhere suits you" and gets the full area points.
 
 ## Database (`supabase/schema.sql`)
 ```sql
@@ -255,7 +287,7 @@ alter publication supabase_realtime add table matches, messages, swipes;
 This is a hackathon demo with only seeded, fake data, so **row-level security is off**. Say so in the README and never put real user data in it.
 
 ## Mock adapter (`src/lib/adapters/mock.ts`)
-- State lives in localStorage under the key `homatch:v1`. If the key is empty, it's initialized from `seed.ts`.
+- State lives in localStorage under the key `homatch:v1`. If the key is empty, it's initialized from `fixtures.ts`.
 - Events go through `BroadcastChannel('homatch')`, which lets the tenant tab and the landlord tab update each other live.
 - The session is stored **per tab** in `sessionStorage`, so two tabs can be two different people.
 
@@ -280,7 +312,7 @@ export const AREAS = REGIONS.flatMap(r => r.areas);
 ```
 Dates use the Irish format (`7 Nov`, `1 Dec 2026`). Write the copy in Irish/UK English: "flat", "neighbourhood", "bills", "viewing".
 
-## Seed data (`src/lib/seed.ts`)
+## Seed data (`src/lib/fixtures.ts`)
 - Make prices realistic for Ireland: about €1,700–2,600 for a 1–2 bed in Dublin, €1,300–1,900 in Cork and Galway, €1,000–1,500 in smaller towns, and €650–950 for a room in a shared house. Give most listings a BER (A3–D1). Spread the listings across regions, but put about half of them in Dublin.
 - **3 landlords** with 2–4 listings each, **12 listings** in total. Use real-looking photos (each designer curates their own set; check the image URLs are stable).
 - **20 tenants** with varied preferences. About 8 of them should fit David's "Sunny 2-bed with garden" with a score of 50 or more.

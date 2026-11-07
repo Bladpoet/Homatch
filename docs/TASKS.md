@@ -12,6 +12,19 @@ Times are relative to kickoff (H+0). If the demo slot moves, move the checkpoint
 | **H+5:00** | **CP4: Feature freeze** | Bug fixes and polish only from here. Record the backup demo video. |
 | **H+5:30** | **CP5: Rehearse** | Run the script in `PRODUCT.md` 3 times. Reset the seed. Close every other tab. |
 
+## Status: read this first
+**C0, plus most of C1, C2 and C3, is already done and on `main`.** The CP2 loop already passes on mock data in two tabs, and an automated browser test confirms each step:
+1. Maya likes the listing.
+2. She appears live at the top of David's deck.
+3. The match overlay shows in both tabs.
+4. Quick replies and messages arrive live both ways.
+5. The divider card appears after the liked-you cards.
+
+What that means for each lane:
+- **Coleman:** the data layer is done. Finish **C1** (photos and seed), then go straight to **C4** (Supabase). That's now the critical path for demoing on real phones.
+- **Jazz and Kamsi:** every component you own exists as a working stub with the final props, already wired into real pages and data. **Replace the stub's internals and keep its props.** Look for `STUB(C0)` comments.
+- Wiring that's done (Discover, Matches, Chat, AppShell): restyle the visuals freely, but keep the data flow.
+
 ## Parallel lanes
 Everyone works at the same time. **Nobody waits on another person's PR**, because C0 creates a stub for every shared component and data function from `CONTRACTS.md` → Component contracts. You code against the stub, and the real version replaces it when it merges.
 
@@ -62,7 +75,7 @@ Everyone works at the same time. **Nobody waits on another person's PR**, becaus
 
 ## Coleman: data, matching, realtime, deploy
 
-### C0 · Scaffold, contracts, and stubs · P0 · by H+0:45 (everyone depends on this, so keep it lean)
+### C0 · Scaffold, contracts, and stubs · ✅ done
 Set up:
 - Next.js (App Router, TypeScript, `src/`), Tailwind v4, `motion`, and ESLint
 - The folder skeleton from `AGENTS.md`
@@ -82,20 +95,29 @@ Then:
 Then link Vercel.
 **Accept:** `npm run dev` shows every route inside the phone frame, and the build passes. Pushed to `main`, and the team has been told.
 
-### C1 · Mock adapter + seed + fit score · P0 · by H+1:30
-`seed.ts` as specified in `CONTRACTS.md`, `score.ts`, and `adapters/mock.ts` implementing **every** API function, with the session in sessionStorage. Add a `/demo` persona picker (basic styling is fine) with **Reset demo**.
-**Accept:** in tab A pick Maya and in tab B pick David. `getTenantDeck(maya)` returns David's listing at about 90% fit. `getLandlordDeck(sunny2bed)` returns 3 liked-you items, then a divider, then the discover items.
+### C1 · Seed curation + /demo polish · P0 · by H+1:30
+✅ Already done: `score.ts`, `engine.ts`, `adapters/mock.ts` (every API function, session in sessionStorage, BroadcastChannel with a revision wait), and a working `/demo` with Reset. The seed is in `src/lib/fixtures.ts` (3 landlords, 12 listings, 16 tenants).
+**Still to do:**
+- **Curate the photos.** All the Unsplash URLs load, but they aren't Irish homes, and nobody has checked that each one shows what it's labelled as.
+- Grow the seed to about 20 tenants.
+- Polish `/demo`.
 
-### C2 · Swipe → match → events · P0 · by CP2
-Implement `swipe()` with match creation, `undoLastSwipe()`, and `subscribe()` over BroadcastChannel (`match`, `message`, and `like` events), plus `getMatches`, `getMessages`, `sendMessage`, and `markRead`.
-**Accept:** the CP2 loop works in two tabs, and both tabs receive the `match` event within 1 second.
+If you change the seed's shape, bump `SEED_VERSION` so every browser re-seeds.
+**Accept:** every card photo looks like an Irish rental, and Reset restores the exact starting point of the demo script.
 
-### C3 · Discover page wiring · P0 · by CP2
+### C2 · Swipe → match → events · ✅ done (hardening only)
+✅ Done and tested in two tabs. If you have spare time, harden the edge cases:
+- a swipe that fails, which should show a toast and then reload
+- undo straight after a match
+- reset while a chat is open
+
+### C3 · Discover page wiring · ✅ done
+✅ Done in `src/app/(app)/discover/page.tsx` and `(app)/AppShell.tsx`. Swipes are optimistic, rewind works, the landlord deck refetches live when a `like` event arrives, the listing switcher sheet works, and the match overlay is deduped. The original spec is kept below for reference.
 Don't wait for Jazz: wire against the stub `SwipeDeck` and card components, and the real ones drop in when they merge. Wire `(app)/discover` to the right deck for the current role. For landlords, add the active-listing state (the switcher UI comes from Kamsi's `Sheet`/`Chip`). Mount the global `subscribe()` in `(app)/layout.tsx` and pass `match` events to `MatchOverlay`. When a `like` event arrives for the active listing, refetch the landlord deck.
 **Accept:** the deck renders real seed data for both roles. Maya's like appears in David's deck without a page reload.
 
 ### C4 · Supabase adapter · P1 · by CP3
-Apply `schema.sql`. Write a seed script that loads `seed.ts` into Supabase, `adapters/supabase.ts` with the same behavior as the mock adapter, and Realtime for `subscribe()`. `resetDemo()` re-seeds.
+Apply `schema.sql`. Write a seed script that loads `fixtures.ts` into Supabase, `adapters/supabase.ts` with the same behavior as the mock adapter, and Realtime for `subscribe()`. `resetDemo()` re-seeds.
 **Accept:** the CP2 loop works across **two different devices** on the Vercel URL with `NEXT_PUBLIC_DATA_MODE=supabase`. If it isn't solid by CP3, we demo on mock and stop working on this.
 
 ### C5 · Deploy and demo reliability · P0 · by CP4

@@ -46,7 +46,13 @@ Homatch is swipe-to-match for renting. **Tenants** (house hunters) set their pre
 
 **Shared files** (`package.json`, `types.ts`, `api.ts`, `tokens.css`): see `docs/TASKS.md` → Merging. **When you replace a stub component, keep its props exactly** as in `CONTRACTS.md` → Component contracts.
 
-## Target folder map
+## The skeleton is built
+Every file below exists, and the whole demo loop already works on mock data in two tabs. Components marked `STUB(C0)` are working placeholders with their **final props**. Replace their internals and keep the props. See `docs/CONTRACTS.md` → "How the code is laid out" for what lives where (`api.ts`, `engine.ts`, `hooks.ts`, `useUser()`, and so on).
+
+- **Try it:** `npm run dev` → open `/demo` in two tabs → pick Maya in one and David in the other.
+- **Sandboxes:** `/playground` (deck, cards, and a "Trigger match" button) and `/kit` (UI components and tokens).
+
+## Folder map
 ```
 src/
   app/
@@ -66,10 +72,10 @@ src/
     chat/    ChatThread.tsx, MessageBubble.tsx, Composer.tsx, QuickReplies.tsx
     ui/      Button, IconButton, Chip, Segmented, Sheet, Avatar, Input, RangeSlider, Stepper, PhoneFrame, BottomNav, Toast
   lib/
-    types.ts  api.ts  config.ts  score.ts  seed.ts  format.ts
-    adapters/mock.ts  adapters/supabase.ts
-  styles/tokens.css
-supabase/schema.sql
+    types.ts  api.ts  config.ts  score.ts  engine.ts  fixtures.ts  format.ts  hooks.ts  session.tsx
+    adapters/types.ts  adapters/mock.ts  (adapters/supabase.ts comes in C4)
+  styles/globals.css  tokens.css  deck.tokens.css  motion.ts
+supabase/schema.sql  (C4)
 ```
 
 ## Commands

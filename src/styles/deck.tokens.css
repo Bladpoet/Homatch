@@ -1,0 +1,10 @@
+/*
+ * Deck-specific visual tokens. Owner: Jazz.
+ * Gesture numbers (thresholds, rotation) live in src/components/deck/deck.config.ts.
+ */
+@theme {
+  --color-stamp-like: var(--color-like);
+  --color-stamp-pass: var(--color-pass);
+  --radius-deck-card: var(--radius-card);
+  --shadow-deck-card: var(--shadow-card);
+}
