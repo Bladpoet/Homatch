@@ -34,13 +34,14 @@ The **skeleton is built, tested, and on `main`.** The whole demo loop works toda
 | C5a Link Vercel | Coleman | P0 | 🔴 **do first, 5 min** |
 | **C8 AI fit** (API route, cache, deck upgrade) | Coleman | **P0 (new)** | 🔴 to do |
 | **C7 Likes tab** (data, page, intro note data) | Coleman | **P0 (new)** | 🔴 to do |
+| **C9 New preference fields + Discover filter sheet** | Coleman | **P0 (new)** | 🔴 to do |
 | C1 Photos, seed, /demo polish | Coleman | P0 | 🟡 to do |
 | C4 Supabase (real phones) | Coleman | P1 (was P0) | 🔴 after C7/C8 |
 | G1 Visual direction | Jazz + Kamsi | P0 | 🔴 **do first, 30 min** |
 | J1–J6 Deck, cards, overlay, sheets | Jazz | P0/P1 | 🔴 to do (stubs in place) |
 | **J7 Like tiles + AI fit on cards** | Jazz | **P0 (new)** | 🔴 to do |
 | K0–K1 Tokens, kit, shell (now 4 tabs) | Kamsi | P0 | 🔴 to do (stubs in place) |
-| **K2 Onboarding** (select and sliders, intro note) | Kamsi | **P0 (was P1)** | 🔴 to do. **Waiting on references** |
+| **K2 Onboarding: "Start matching" sheet + About you** | Kamsi | **P0 (was P1)** | 🔴 to do. **References are in**: `docs/design/references/onboarding/` |
 | K3–K5 Matches, chat, polish | Kamsi | P0/P1 | 🔴 to do (wired, needs design) |
 
 _Update this table when you merge._
@@ -49,7 +50,7 @@ _Update this table when you merge._
 - **AI fit** (PRODUCT → AI fit): Claude refines the fit score and writes a one-line headline for each card. Rules stay as the instant fallback.
 - **Likes tab** (PRODUCT → 5b): two tabs, **Liked you** and **You liked**, with sorting. Liking back is an instant match.
 - **Intro note** (PRODUCT → Intro note): a 140-character note on your profile, which only people you've liked can see.
-- **Onboarding** becomes P0: clean, almost typing-free, built from taps and sliders. The design references go in `docs/design/references/onboarding/`.
+- **Onboarding** becomes P0: one **"Start matching" sheet** of tap options and a budget slider, following the references in `docs/design/references/onboarding/` (read `NOTES.md` there), then a short "About you" step. The same form doubles as the **Discover filter sheet** and Profile editing.
 - **Nav is now 4 tabs:** Discover · Likes · Matches · Profile.
 - **No Explore or Top houses tab.** See PRODUCT → Decisions. Quick-filter chips and a "Top pick" badge (P2) cover it instead.
 
@@ -99,8 +100,8 @@ Agree on the mood, color, type, and **card anatomy**. Mock up five frames in Fig
 ### G2 · Remaining open questions · whole team · 5 min
 - ~~Likes grid / note with a like~~ **Decided:** we're building the Likes tab and the intro note.
 - **AI fit model:** `claude-opus-5-5` at low effort is the default. If card upgrades feel slow on stage, switch to `claude-haiku-5-5`.
-- **Onboarding references:** whoever has them, drop them in `docs/design/references/onboarding/` (or link a Figma there) **before Kamsi starts K2**.
-- The name: we're going with Homatch unless someone objects.
+- ~~Onboarding references~~ **Done:** they're in `docs/design/references/onboarding/`.
+- **The name needs a decision.** The reference screenshots come from an existing app called **HomeMatch**, and "Homatch" is one letter away. Judges may assume we copied it. Either own it in the pitch ("inspired by HomeMatch's filters, but two-sided"), or pick a distinct name now, before the visual direction is locked. A rename is cheap today: `APP_NAME` in `src/lib/config.ts`, the wordmark, and the README.
 
 ### G3 · Polish list · everyone · ongoing
 Add one line per nit you notice at the bottom of this file, in the form `[screen] what's wrong → what it should be (who)`. Owners sweep it after CP3.

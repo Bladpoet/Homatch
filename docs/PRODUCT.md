@@ -27,29 +27,31 @@ A match can complete from either side. If the landlord swipes right on a renter 
 Our stand-in for login. It shows a grid of seeded personas with a role tag (Tenant/Landlord) and a **Reset demo** button. Picking a persona goes to `/discover`, or to onboarding if that persona hasn't finished it.
 
 ### 1. Tenant onboarding (`/onboarding/tenant`) (P0)
-It's **clean and almost typing-free: you tap to select, and drag sliders.** Visual references go in `docs/design/references/onboarding/`. If they've landed, match them.
+**Follow the references:** `docs/design/references/onboarding/` (the screenshots plus `NOTES.md`, which has the measured spec). Take their layout and interactions, not their colours.
 
-**Pattern**
-- One question per screen, with a thin progress bar at the top.
-- Big tappable chips and cards, at least 44px tall.
-- Single-select questions **auto-advance** after a short beat (about 250ms), so the tap feels confirmed.
-- Multi-select questions have a Continue button that's disabled until something is chosen.
-- Steps slide horizontally (forward slides left). Back is a top-left chevron.
-- Optional steps have "Skip".
+The flow is **one "Start matching" sheet, then "About you"**, and it's almost typing-free.
 
-**Steps**
-1. **Who's moving?** Just me / Me + partner / Friends sharing / Family. Single-select; this sets `householdSize`.
-2. **Budget:** a dual-handle range slider (€500–€4,000 in €50 steps). Live values sit above the handles, with a hint like "Typical 2-bed in Dublin: €2,000–2,600".
-3. **Where?** Chips grouped under region headings (Dublin, Cork, Galway, …), each region with an "Anywhere in {region}" chip. Multi-select.
-4. **When?** Move-in chips: ASAP / This month / Next month / Pick a date. Then lease length chips: 6 / 12 / 18+ months.
-5. **Bedrooms:** Room in a share / 1 / 2 / 3+. Single-select.
-6. **Lifestyle:** two yes/no toggles, pets and smoker.
-7. **Your note to landlords** (optional): a 140-character text field with tappable starters, like "Quiet professional, home most evenings" or "Long-term renter, great references". This is the **intro note** (see Likes).
-8. **Photo:** choose from a few preset avatars (it's a demo, so no upload).
+**Screen 1: Start matching.** One scrolling screen of icon-labelled sections, each with sensible defaults, so it can be done in a few taps:
+1. Where in Ireland? (search, then area chips by region)
+2. Place type
+3. Property type
+4. Monthly budget (range slider)
+5. Min bedrooms (Any · 1+ … 5+)
+6. Min bathrooms
+7. Moving in
+8. Lease
+9. Household
+10. Pets and smoker
 
-It ends on a short "Finding homes that fit you…" moment (an AI sparkle and 3 house thumbnails shuffling), then the deck.
+Selected options are filled in the accent colour with a soft shadow, and unselected ones sit on a light grey fill. The sticky footer has **Reset** and **Start matching**. "Start matching" stays disabled until at least one area is picked.
 
-All of this saves through `saveTenantPrefs()` and `saveProfile()`. The same controls get reused on the Profile screen to edit preferences.
+**Screen 2: About you.** Pick an avatar, then write the **intro note** (140 characters, with tappable starters like "Quiet professional, home most evenings" and "Long-term renter, great references"). It's optional and has Skip.
+
+**Finish:** a short "Finding homes that fit you…" moment (an AI sparkle and 3 house thumbnails shuffling), then the deck.
+
+**One component, three places:** `PreferencesForm` is the Start matching sheet in onboarding, **the Discover filter sheet** (the sliders icon in the Discover header), and Profile → Edit preferences. Changing preferences from Discover refetches the deck straight away.
+
+Everything saves through `saveTenantPrefs()` and `saveProfile()`.
 
 ### 2. Landlord onboarding / create listing (`/onboarding/landlord`) (P2)
 A stepper: photos (pick from a seeded gallery for the demo), basics (title, area, beds/baths, furnished), rent and dates, rules (pets, smoking), and description. Stretch goal: an "AI write my description" button.

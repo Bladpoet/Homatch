@@ -2,7 +2,7 @@
 
 **Read first:** [team board](README.md) → `AGENTS.md` → `docs/PRODUCT.md` (screens 1, 6, 7 and the Interaction spec).
 
-**You own:** `src/styles/**` (except `deck.tokens.css`), `src/components/ui/**`, `src/components/chat/**`, `src/app/kit/**`, `src/app/(app)/matches/**`, `src/app/(app)/chat/**`, `src/app/onboarding/tenant/**`.
+**You own:** `src/styles/**` (except `deck.tokens.css`), `src/components/ui/**`, `src/components/chat/**`, `src/components/onboarding/**`, `src/app/kit/**`, `src/app/(app)/matches/**`, `src/app/(app)/chat/**`, `src/app/onboarding/tenant/**`.
 
 **Your job today:** decide how Homatch **looks and feels** everywhere outside the deck. Your tokens restyle the whole app at once, because every screen already uses them. **Onboarding is now P0**: a clean, tap-and-slider flow built from your references.
 
@@ -70,35 +70,32 @@ Design the existing page: the New matches row (tenants see the home photo, landl
 
 **Accept:** messages appear in both tabs within 1 second (already true), quick replies send in one tap, and it looks great.
 
-### K2 · Tenant onboarding · **P0** · by CP3 (start right after K1a)
-**References first:** check `docs/design/references/onboarding/`. If they're there, match them closely. If they aren't, ask Kamsi or the team.
+### K2 · Tenant onboarding: "Start matching" · **P0** · by CP3 (start right after K1a)
+**References are in:** `docs/design/references/onboarding/`. Read **`NOTES.md`** first: it has the measured spec, which sections we use, and their defaults. Match the layout, spacing and interaction exactly. Use our tokens, not their colours.
 
-The full step list is in `PRODUCT.md` §1. In short:
-1. Who's moving?
-2. Budget (RangeSlider)
-3. Where? (region-grouped chips from `config.REGIONS`)
-4. When? (move-in and lease chips)
-5. Bedrooms
-6. Pets and smoker toggles
-7. **Intro note** (optional, 140 characters, with tappable starters)
-8. Photo (preset avatars)
-
-**Feel**
-- It's clean and almost typing-free.
-- Single-select questions auto-advance after about 250ms.
-- Multi-select questions have a Continue button, disabled until something is chosen.
-- Steps slide horizontally with your motion tokens. Back is a chevron, optional steps have Skip, and a thin progress bar sits on top.
+**Build these:**
+1. **`ui/OptionGroup.tsx`**: the reference's option buttons. Equal-width grid, 48px tall, about 14px radius. Selected is the accent fill with white text and a soft accent shadow; unselected is `surface-2` with muted text. It handles single-select, multi-select, and the six-cell "Any · 1+ … 5+" row. The press animation is `scale(0.97)`, and the selection colour change takes 150ms.
+2. **`ui/RangeSlider.tsx`**: dual handles, with values above both ends, a 4px track, white handles with a 28px touch area, and keyboard arrows.
+3. **`components/onboarding/PreferencesForm.tsx`**: the whole "Start matching" sheet:
+   - Ten icon-labelled sections, following `NOTES.md` → "How Homatch adapts it"
+   - A sticky footer with **Reset** and **Start matching**
+   - Start matching stays disabled until an area is picked
+   - Props are in `CONTRACTS.md`
+4. **`/onboarding/tenant`**:
+   - `PreferencesForm` first, then the **About you** step (avatar picker, then the intro note with starters and Skip), sliding horizontally.
+   - Then "Finding homes that fit you…" (about 1.5s), then `router.replace('/discover')`.
 
 **Wiring**
-- Use `useCurrentUser()` from `src/lib/hooks.ts`.
-- Save with `saveTenantPrefs(user.id, prefs, { avatarUrl })` and `saveProfile(user.id, { introNote })`. `saveProfile` is new; if C7 hasn't landed yet, pass `introNote` in the third argument of `saveTenantPrefs`.
-- Finish on "Finding homes that fit you…" (a sparkle and shuffling thumbnails, about 1.5s), then `router.replace('/discover')`.
-- Build the controls (Chip groups, RangeSlider, toggle) so they can be **reused on `/profile`**.
+- Use `useCurrentUser()`.
+- Map the chips to prefs as described in `CONTRACTS.md`.
+- Save with `saveTenantPrefs(user.id, prefs, { avatarUrl })` and `saveProfile(user.id, { introNote })`. If `saveProfile` hasn't landed yet (C7), pass `introNote` in the third argument of `saveTenantPrefs`.
+- **Hand-off:** Coleman uses `PreferencesForm` in a `Sheet` as the **Discover filter sheet** and on Profile. Keep it free of page-specific logic.
 
 **Accept:**
-- Sam goes from `/demo` to a deck in under 30 seconds with mostly taps.
-- His choices visibly change his deck.
-- It looks like the references.
+- Side by side with `ref-1`, it reads as the same pattern.
+- Sam goes from `/demo` to the deck in under 30 seconds.
+- Changing the budget or areas visibly changes his deck.
+- It works at 390×844 with no horizontal scroll, and every control is reachable by keyboard.
 
 ### K5 · Empty states, loading, copy · P1 · by CP4
 Every screen gets a designed empty state and a skeleton. Do one copy pass in Irish/UK English: flat, viewing, bills.

@@ -6,7 +6,7 @@
 
 **Your job today:** keep `main` green and demoable, get the app onto a URL, and build the two new data features: **AI fit** (Claude) and the **Likes tab**. After that comes Supabase for real phones. The core data layer is already done.
 
-**Order:** C5a (Vercel) → C8 (AI fit) → C7 (Likes) → C1 (photos) → C4 (Supabase) → C5 (reliability).
+**Order:** C5a (Vercel) → C8 (AI fit) → C7 (Likes) → C9 (new preference fields, filter sheet) → C1 (photos) → C4 (Supabase) → C5 (reliability).
 
 You also own `src/app/(app)/likes/**` and `src/app/api/fit/**`.
 
@@ -74,6 +74,16 @@ Full spec: `docs/PRODUCT.md` → 5b Likes and Intro note, and `docs/CONTRACTS.md
 **Accept:**
 - Maya → Likes → Liked you shows David's studio with his note. Tapping Interested matches instantly in both tabs.
 - David → Likes → Liked you shows the renters who liked any of his listings, filterable by listing.
+
+### C9 · New preference fields + Discover filter sheet · P0 · by CP3
+The onboarding references added new fields (`CONTRACTS.md` → TenantPrefs and Listing).
+- Add the optional `bathroomsMin`, `placeType` and `propertyType` to `TenantPrefs`.
+- Add `propertyType` and `isRoom` to `Listing`, and seed them for all 12 listings.
+- In the engine and score: `placeType` and `propertyType` are hard filters in the tenant deck, and `bathroomsMin` folds into the Bedrooms criterion.
+- **Discover filter sheet:** the sliders icon in the Discover header opens Kamsi's `PreferencesForm` inside a `Sheet`. Saving calls `saveTenantPrefs` and refetches the deck. Until her component lands, keep the icon linking to `/profile`.
+- On `/profile`, Edit preferences opens the same sheet.
+
+**Accept:** in Maya's tab, changing her budget from the Discover sheet changes the deck immediately, and the engine check script still passes the demo story.
 
 ### C1 · Photos, seed, /demo polish · P0 · by CP3
 - **Photos.** Replace the stock photos in `src/lib/fixtures.ts` (the `P` map) with Irish-looking rentals: red-brick terraces, Georgian doors, modern Dublin apartments, and Cork/Galway flats. Each listing needs at least 3 photos in the right order: hero, living room, bedroom, kitchen or exterior. Check each URL loads, and add any new image host to `next.config.ts`.

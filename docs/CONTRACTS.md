@@ -29,7 +29,14 @@ export interface TenantPrefs {
   pets: boolean;
   smoker: boolean;
   householdSize: number;
+  // NEW (onboarding sheet). All optional, and undefined means "Any":
+  bathroomsMin?: number;
+  placeType?: 'whole' | 'room';               // whole place vs a room in a share
+  propertyType?: 'house' | 'apartment';
 }
+// Onboarding chips → moveInBy: ASAP = today+14d · This month = last day of this month ·
+// Next month = last day of next month · Later = today+90d.
+// Household chips → householdSize: Just me = 1 · 2 · 3 · 4+ = 4.
 
 export interface Tenant extends Profile {
   role: 'tenant';
@@ -55,7 +62,12 @@ export interface Listing {
   furnished: boolean;
   description: string;
   amenities: string[];      // "Garden", "Washer", "Bike storage"
+  propertyType?: 'house' | 'apartment';   // NEW: seed these (C1)
+  isRoom?: boolean;                        // NEW: true for a room in a share
 }
+// Filtering rules for the new prefs:
+// - placeType and propertyType are HARD filters in the tenant deck when set: exclude mismatches.
+// - bathroomsMin folds into the Bedrooms criterion: both must pass to earn its 15 points.
 
 export interface Swipe {
   actor: Role;              // who swiped
@@ -282,6 +294,8 @@ PhoneFrame: { children: React.ReactNode }
 BottomNav:  { matchesBadge?: number; likesBadge?: number }   // NEW: 4 tabs (Discover · Likes · Matches · Profile)
 Segmented:  { options: { value: string; label: string; count?: number }[]; value: string; onChange: (v: string) => void }   // NEW (Kamsi K1b): Likes tabs, sort
 RangeSlider:{ min: number; max: number; step: number; value: [number, number]; onChange: (v: [number, number]) => void; format?: (n: number) => string }   // NEW (Kamsi K1b): onboarding budget
+OptionGroup:{ options: { value: string; label: string }[]; value: string | string[]; onChange: (v: any) => void; multi?: boolean; columns?: 2 | 3 | 4 | 6 }   // NEW (Kamsi): the reference's filled/grey option buttons and number chips
+PreferencesForm: { value: TenantPrefs; onChange: (p: TenantPrefs) => void; onSubmit: () => void; onReset: () => void; submitLabel?: string }   // NEW (Kamsi K2): used in onboarding, the Discover filter sheet, and Profile
 
 // components/chat  (Kamsi)
 ChatThread: { messages: Message[]; meId: string }
