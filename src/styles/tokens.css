@@ -23,6 +23,7 @@
   --color-ink-subtle: #a19c94; /* placeholders, disabled */
   --color-accent: #1e6b52; /* primary actions, my bubbles */
   --color-on-accent: #ffffff;
+  --color-accent-strong: #154d3b; /* gradient end on primary CTAs */
   --color-like: #1fa36b;
   --color-pass: #e5484d;
   --color-rewind: #e8a317;
@@ -53,6 +54,7 @@
   --radius-chip: 999px;
   --radius-button: 999px;
   --radius-input: 14px;
+  --radius-option: 14px; /* option buttons on the Start matching sheet */
   --radius-card: 20px;
   --radius-sheet: 28px;
   --radius-frame: 48px;
@@ -61,6 +63,8 @@
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 12px 32px -8px rgb(0 0 0 / 0.22);
   --shadow-button: 0 1px 2px rgb(0 0 0 / 0.08), 0 6px 16px -4px rgb(0 0 0 / 0.18);
   --shadow-sheet: 0 -8px 40px -8px rgb(0 0 0 / 0.25);
+  --shadow-option: 0 6px 16px -4px color-mix(in srgb, var(--color-accent) 45%, transparent);
+  --shadow-cta: 0 10px 24px -8px color-mix(in srgb, var(--color-accent) 55%, transparent);
   --shadow-frame: 0 0 0 10px #1b1a18, 0 30px 80px -20px rgb(0 0 0 / 0.45);
 
   /* ── Motion (CSS side; springs are in motion.ts) ───── */

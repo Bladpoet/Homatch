@@ -43,10 +43,19 @@ const findSwipe = (s: DbState, actor: Swipe['actor'], tenantId: string, listingI
 
 // ── Decks ────────────────────────────────────────────────────────────────
 
+/** Place type and property type from the Start matching sheet are hard filters (undefined = Any). */
+export function matchesHardFilters(p: Tenant['prefs'], l: Listing): boolean {
+  if (p.placeType === 'room' && !l.isRoom) return false;
+  if (p.placeType === 'whole' && l.isRoom) return false;
+  if (p.propertyType && l.propertyType && p.propertyType !== l.propertyType) return false;
+  return true;
+}
+
 export function tenantDeck(s: DbState, tenantId: string): TenantDeckItem[] {
   const t = getTenant(s, tenantId);
   return s.listings
     .filter((l) => !findSwipe(s, 'tenant', tenantId, l.id))
+    .filter((l) => matchesHardFilters(t.prefs, l))
     .map((l) => ({ kind: 'listing' as const, listing: l, owner: getProfile(s, l.ownerId), fit: fit(t.prefs, l) }))
     .filter((i) => i.fit.score >= TENANT_DECK_MIN_FIT)
     .sort((a, b) => b.fit.score - a.fit.score);

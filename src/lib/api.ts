@@ -26,6 +26,7 @@ export const {
   getCurrentUser,
   setCurrentUser,
   resetDemo,
+  saveProfile,
   getTenant,
   saveTenantPrefs,
   getTenantDeck,

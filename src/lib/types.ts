@@ -13,6 +13,8 @@ export interface Profile {
   age?: number;
   occupation?: string;
   onboarded: boolean;
+  /** ≤140 chars. Shown only to people this user has liked. */
+  introNote?: string;
 }
 
 export interface TenantPrefs {
@@ -25,6 +27,10 @@ export interface TenantPrefs {
   pets: boolean;
   smoker: boolean;
   householdSize: number;
+  /** Optional filters from the Start matching sheet. undefined = Any. */
+  bathroomsMin?: number;
+  placeType?: 'whole' | 'room';
+  propertyType?: 'house' | 'apartment';
 }
 
 export interface Tenant extends Profile {
@@ -51,6 +57,9 @@ export interface Listing {
   furnished: boolean;
   description: string;
   amenities: string[];
+  propertyType?: 'house' | 'apartment';
+  /** A room in a house share rather than a whole place. */
+  isRoom?: boolean;
 }
 
 export interface Swipe {

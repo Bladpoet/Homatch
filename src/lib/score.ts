@@ -48,12 +48,13 @@ export function fit(prefs: TenantPrefs, listing: Listing): Fit {
     reasons.push({ label: 'Outside your areas', ok: false, weight: 20 });
   }
 
-  // Bedrooms (15)
-  if (listing.bedrooms >= prefs.bedroomsMin) {
+  // Bedrooms (15). Bathrooms, if asked for, must pass too.
+  const bathsOk = !prefs.bathroomsMin || listing.bathrooms >= prefs.bathroomsMin;
+  if (listing.bedrooms >= prefs.bedroomsMin && bathsOk) {
     score += 15;
-    reasons.push({ label: `${listing.bedrooms} bed`, ok: true, weight: 15 });
+    reasons.push({ label: listing.isRoom ? 'Room in a share' : `${listing.bedrooms} bed`, ok: true, weight: 15 });
   } else {
-    reasons.push({ label: 'Fewer beds', ok: false, weight: 15 });
+    reasons.push({ label: bathsOk ? 'Fewer beds' : 'Fewer bathrooms', ok: false, weight: 15 });
   }
 
   // Move-in (15)

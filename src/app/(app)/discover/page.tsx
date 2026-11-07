@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 import { DividerCard } from '@/components/cards/DividerCard';
+import { PreferencesSheet } from '@/components/onboarding/PreferencesSheet';
 import { ListingCard } from '@/components/cards/ListingCard';
 import { ListingDetail } from '@/components/cards/ListingDetail';
 import { TenantCard } from '@/components/cards/TenantCard';
@@ -30,6 +31,7 @@ function TenantDiscover({ user }: { user: Profile }) {
   const deck = useAsync(() => getTenantDeck(user.id), [user.id]);
   const [history, setHistory] = useState<TenantDeckItem[]>([]);
   const [detail, setDetail] = useState<TenantDeckItem | null>(null);
+  const [filtering, setFiltering] = useState(false);
   const items = deck.data ?? [];
 
   useAppEvents(user.id, (e) => {
@@ -63,10 +65,24 @@ function TenantDiscover({ user }: { user: Profile }) {
     <>
       <header className="flex h-14 shrink-0 items-center justify-between px-4">
         <Wordmark />
-        <Link href="/profile" aria-label="Your preferences" className="flex size-11 items-center justify-center rounded-full text-ink-muted">
+        <button
+          type="button"
+          onClick={() => setFiltering(true)}
+          aria-label="Your preferences"
+          className="flex size-11 items-center justify-center rounded-full text-ink-muted active:scale-95"
+        >
           <SlidersHorizontal size={22} />
-        </Link>
+        </button>
       </header>
+      <PreferencesSheet
+        tenantId={user.id}
+        open={filtering}
+        onClose={() => setFiltering(false)}
+        onSaved={() => {
+          setHistory([]);
+          void reload();
+        }}
+      />
       {deck.loading && !deck.data ? (
         <DeckSkeleton />
       ) : (
@@ -83,9 +99,13 @@ function TenantDiscover({ user }: { user: Profile }) {
               title="You've seen every home that fits"
               body="Widen your budget or areas to see more."
               action={
-                <Link href="/profile" className="inline-flex h-11 items-center rounded-button border border-line bg-surface px-5 font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setFiltering(true)}
+                  className="inline-flex h-11 items-center rounded-button border border-line bg-surface px-5 font-semibold"
+                >
                   Edit preferences
-                </Link>
+                </button>
               }
             />
           }

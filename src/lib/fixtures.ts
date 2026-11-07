@@ -23,7 +23,7 @@ export interface DbState {
   reads: Record<string, string>;
 }
 
-export const SEED_VERSION = 1;
+export const SEED_VERSION = 2;
 
 // TODO(C1): curate photos. These all load, but they aren't Irish homes.
 const photo = (id: string) =>
@@ -64,6 +64,7 @@ const P = {
 const landlords: Profile[] = [
   {
     id: 'p-david',
+    introNote: 'Garden gets afternoon sun. I fix things the same week.',
     role: 'landlord',
     name: 'David Nolan',
     avatarUrl: avatar('men/52'),
@@ -117,6 +118,7 @@ const tenant = (t: Omit<Tenant, 'role' | 'onboarded' | 'prefs'> & { prefs: Parti
 const tenants: Tenant[] = [
   tenant({
     id: 'p-maya',
+    introNote: 'Designer, quiet, home most evenings. Looking for 12 months or more.',
     name: 'Maya Okafor',
     avatarUrl: avatar('women/44'),
     age: 28,
@@ -137,6 +139,7 @@ const tenants: Tenant[] = [
   // Already liked David's "Sunny 2-bed with garden"
   tenant({
     id: 'p-niamh',
+    introNote: 'Night-shift nurse, so quiet and tidy by necessity.',
     name: 'Niamh Kelly',
     avatarUrl: avatar('women/68'),
     age: 31,
@@ -269,6 +272,8 @@ const listings: Listing[] = [
   // David — Dublin
   {
     id: 'l-sunny',
+    propertyType: 'apartment',
+    isRoom: false,
     ownerId: 'p-david',
     title: 'Sunny 2-bed with garden',
     photos: [P.living4, P.bed1, P.kitchen1, P.houseD],
@@ -290,6 +295,8 @@ const listings: Listing[] = [
   },
   {
     id: 'l-ranelagh',
+    propertyType: 'apartment',
+    isRoom: false,
     ownerId: 'p-david',
     title: 'Bright studio by the Luas',
     photos: [P.living1, P.interior3, P.kitchen2],
@@ -311,6 +318,8 @@ const listings: Listing[] = [
   },
   {
     id: 'l-stoney',
+    propertyType: 'house',
+    isRoom: false,
     ownerId: 'p-david',
     title: 'Red-brick cottage in Stoneybatter',
     photos: [P.houseA, P.living5, P.bed2, P.kitchen1],
@@ -333,6 +342,8 @@ const listings: Listing[] = [
   // Aoife — Cork & Galway
   {
     id: 'l-corkquay',
+    propertyType: 'apartment',
+    isRoom: false,
     ownerId: 'p-aoife',
     title: 'Quayside 2-bed with river view',
     photos: [P.living2, P.bed3, P.interior1],
@@ -353,6 +364,8 @@ const listings: Listing[] = [
   },
   {
     id: 'l-douglas',
+    propertyType: 'house',
+    isRoom: false,
     ownerId: 'p-aoife',
     title: 'Family semi-d in Douglas',
     photos: [P.houseB, P.living6, P.kitchen2, P.bed1],
@@ -373,6 +386,8 @@ const listings: Listing[] = [
   },
   {
     id: 'l-salthill',
+    propertyType: 'apartment',
+    isRoom: false,
     ownerId: 'p-aoife',
     title: 'Sea-view 1-bed in Salthill',
     photos: [P.interior2, P.bed2, P.living7],
@@ -393,6 +408,8 @@ const listings: Listing[] = [
   },
   {
     id: 'l-galway',
+    propertyType: 'apartment',
+    isRoom: false,
     ownerId: 'p-aoife',
     title: 'Loft apartment off Shop Street',
     photos: [P.interior4, P.living8, P.bed3],
@@ -414,6 +431,8 @@ const listings: Listing[] = [
   // Ciarán — rooms and Leinster
   {
     id: 'l-drumcondra',
+    propertyType: 'house',
+    isRoom: true,
     ownerId: 'p-ciaran',
     title: 'Double room in a 4-person house share',
     photos: [P.bed3, P.living3, P.kitchen2],
@@ -433,6 +452,8 @@ const listings: Listing[] = [
   },
   {
     id: 'l-phibs',
+    propertyType: 'apartment',
+    isRoom: false,
     ownerId: 'p-ciaran',
     title: 'Modern 2-bed in Phibsborough',
     photos: [P.interior5, P.bed1, P.kitchen1, P.houseC],
@@ -453,6 +474,8 @@ const listings: Listing[] = [
   },
   {
     id: 'l-maynooth',
+    propertyType: 'house',
+    isRoom: true,
     ownerId: 'p-ciaran',
     title: 'Room near Maynooth University',
     photos: [P.bed2, P.living3, P.houseE],
@@ -473,6 +496,8 @@ const listings: Listing[] = [
   },
   {
     id: 'l-castletroy',
+    propertyType: 'house',
+    isRoom: false,
     ownerId: 'p-ciaran',
     title: '3-bed townhouse in Castletroy',
     photos: [P.houseF, P.living6, P.interior6],
@@ -493,6 +518,8 @@ const listings: Listing[] = [
   },
   {
     id: 'l-kilkenny',
+    propertyType: 'house',
+    isRoom: false,
     ownerId: 'p-ciaran',
     title: 'Converted mews in Kilkenny',
     photos: [P.houseG, P.interior7, P.interior8],

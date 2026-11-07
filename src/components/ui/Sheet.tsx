@@ -26,13 +26,15 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative max-h-[92%] overflow-y-auto rounded-t-sheet bg-surface pb-[max(16px,env(safe-area-inset-bottom))] shadow-sheet"
+        className="relative max-h-[92%] overflow-y-auto rounded-t-sheet bg-surface shadow-sheet"
       >
         <div className="sticky top-0 z-10 flex flex-col items-center bg-surface pt-2 pb-1">
           <div className="h-1 w-10 rounded-full bg-line" />
           {title && <h2 className="mt-3 text-title font-semibold">{title}</h2>}
         </div>
         {children}
+        {/* Spacer instead of padding: padding would leave a gap under sticky footers. */}
+        <div aria-hidden className="h-[max(16px,env(safe-area-inset-bottom))]" />
       </div>
     </div>
   );

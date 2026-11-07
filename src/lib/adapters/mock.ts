@@ -155,6 +155,12 @@ export const mockAdapter: DataAdapter = {
     emit({ type: 'reset' });
   },
 
+  async saveProfile(id, patch) {
+    transact((s) => {
+      Object.assign(engine.getProfile(s, id), patch);
+    });
+  },
+
   async getTenant(id) {
     return read((s) => engine.getTenant(s, id));
   },

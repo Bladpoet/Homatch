@@ -23,6 +23,12 @@ export interface DataAdapter {
   setCurrentUser(profileId: string | null): Promise<void>;
   resetDemo(): Promise<void>;
 
+  // profile
+  saveProfile(
+    id: string,
+    patch: Partial<Pick<Profile, 'name' | 'bio' | 'avatarUrl' | 'occupation' | 'introNote'>>,
+  ): Promise<void>;
+
   // tenant
   getTenant(id: string): Promise<Tenant>;
   saveTenantPrefs(tenantId: string, prefs: TenantPrefs, profile?: Partial<Profile>): Promise<void>;

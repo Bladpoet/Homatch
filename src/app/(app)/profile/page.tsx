@@ -4,6 +4,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { PreferencesSheet } from '@/components/onboarding/PreferencesSheet';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
@@ -50,11 +52,21 @@ export default function ProfilePage() {
 
 function TenantPrefs({ id }: { id: string }) {
   const tenant = useAsync(() => getTenant(id), [id]);
+  const [editing, setEditing] = useState(false);
   const p = tenant.data?.prefs;
   if (!p) return null;
   return (
     <section className="space-y-4 px-4">
-      <h2 className="text-label font-semibold text-ink-muted">Your preferences</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-label font-semibold text-ink-muted">Your preferences</h2>
+        <button type="button" onClick={() => setEditing(true)} className="h-9 rounded-chip bg-surface-2 px-3.5 text-label font-semibold">
+          Edit
+        </button>
+      </div>
+      <PreferencesSheet tenantId={id} open={editing} onClose={() => setEditing(false)} onSaved={() => void tenant.reload()} />
+      {tenant.data?.introNote && (
+        <blockquote className="rounded-card bg-surface px-4 py-3 text-body text-ink-muted italic">&ldquo;{tenant.data.introNote}&rdquo;</blockquote>
+      )}
       <dl className="grid grid-cols-2 gap-3 text-label">
         <Row k="Budget" v={formatBudget(p.budgetMin, p.budgetMax)} />
         <Row k="Move in by" v={formatDate(p.moveInBy)} />
