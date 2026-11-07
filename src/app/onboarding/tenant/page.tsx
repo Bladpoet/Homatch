@@ -17,12 +17,12 @@ import { duration, ease } from '@/styles/motion';
 type Step = 'prefs' | 'about' | 'finding';
 
 const AVATARS = [
-  'https://randomuser.me/api/portraits/men/75.jpg',
-  'https://randomuser.me/api/portraits/women/50.jpg',
-  'https://randomuser.me/api/portraits/men/36.jpg',
-  'https://randomuser.me/api/portraits/women/17.jpg',
-  'https://randomuser.me/api/portraits/men/8.jpg',
-  'https://randomuser.me/api/portraits/women/79.jpg',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800&h=1000&fit=crop&crop=faces&q=80',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&h=1000&fit=crop&crop=faces&q=80',
+  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=800&h=1000&fit=crop&crop=faces&q=80',
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&h=1000&fit=crop&crop=faces&q=80',
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&h=1000&fit=crop&crop=faces&q=80',
+  'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&h=1000&fit=crop&crop=faces&q=80',
 ];
 
 const NOTE_STARTERS = [

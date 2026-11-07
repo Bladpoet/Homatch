@@ -18,7 +18,7 @@ const CHANNEL = 'homatch';
 type RawEventBody =
   | { type: 'match'; matchId: string }
   | { type: 'message'; matchId: string; messageId: string }
-  | { type: 'like'; listingId: string; tenantId: string }
+  | { type: 'like'; listingId: string; tenantId: string; by: 'tenant' | 'landlord' }
   | { type: 'reset' };
 /** `rev` = the storage revision that contains this event's data. */
 type RawEvent = RawEventBody & { rev: number };
@@ -115,7 +115,8 @@ function toAppEvent(raw: RawEvent, userId: string): AppEvent | null {
       return { type: 'reset' };
     case 'like': {
       const listing = s.listings.find((l) => l.id === raw.listingId);
-      return listing?.ownerId === userId ? { type: 'like', listingId: raw.listingId, tenantId: raw.tenantId } : null;
+      if (raw.by === 'landlord') return raw.tenantId === userId ? { type: 'like', listingId: raw.listingId, tenantId: raw.tenantId, by: 'landlord' } : null;
+      return listing?.ownerId === userId ? { type: 'like', listingId: raw.listingId, tenantId: raw.tenantId, by: 'tenant' } : null;
     }
     case 'match': {
       const m = s.matches.find((x) => x.id === raw.matchId);
@@ -265,7 +266,7 @@ export const mockAdapter: DataAdapter = {
 
   async swipe(input) {
     const { match, isLike } = transact((s) => engine.applySwipe(s, input, now()));
-    if (isLike) emit({ type: 'like', listingId: input.listingId, tenantId: input.tenantId });
+    if (isLike) emit({ type: 'like', listingId: input.listingId, tenantId: input.tenantId, by: input.actor });
     if (!match) return {};
     emit({ type: 'match', matchId: match.id });
     const swiperId = input.actor === 'tenant' ? input.tenantId : match.landlordId;
@@ -302,6 +303,10 @@ export const mockAdapter: DataAdapter = {
     transact((s) => {
       s.reads[`${matchId}:${userId}`] = now();
     });
+  },
+
+  async getLikes(userId, opts) {
+    return read((s) => engine.likesFor(s, userId, opts));
   },
 
   getAiFit: aiFit,

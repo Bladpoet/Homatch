@@ -3,6 +3,7 @@ import type {
   AppEvent,
   Fit,
   LandlordDeckItem,
+  Likes,
   Listing,
   MatchSummary,
   Message,
@@ -53,6 +54,9 @@ export interface DataAdapter {
   getMessages(matchId: string): Promise<Message[]>;
   sendMessage(matchId: string, senderId: string, body: string): Promise<Message>;
   markRead(matchId: string, userId: string): Promise<void>;
+
+  // likes tab
+  getLikes(userId: string, opts?: { listingId?: string }): Promise<Likes>;
 
   // AI fit — cached, never throws (falls back to the rule fit)
   getAiFit(input: AiFitInput): Promise<Fit>;

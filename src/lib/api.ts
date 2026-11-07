@@ -42,6 +42,7 @@ export const {
   getMessages,
   sendMessage,
   markRead,
+  getLikes,
   getAiFit,
   subscribe,
 } = adapter;

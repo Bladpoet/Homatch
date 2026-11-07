@@ -25,7 +25,7 @@ export interface DbState {
   aiFits?: Record<string, Fit>;
 }
 
-export const SEED_VERSION = 3;
+export const SEED_VERSION = 5;
 
 const SEED_AI_FITS: Record<string, Fit> = {
   'tenant:p-maya:l-sunny': {
@@ -55,7 +55,7 @@ const SEED_AI_FITS: Record<string, Fit> = {
 // TODO(C1): curate photos. These all load, but they aren't Irish homes.
 const photo = (id: string) =>
   `https://images.unsplash.com/photo-${id}?w=900&q=80&auto=format&fit=crop`;
-const avatar = (path: string) => `https://randomuser.me/api/portraits/${path}.jpg`;
+const portrait = (id: string) => `https://images.unsplash.com/photo-${id}?w=800&h=1000&fit=crop&crop=faces&q=80`;
 
 const P = {
   houseA: photo('1512917774080-9991f1c4c750'),
@@ -94,7 +94,7 @@ const landlords: Profile[] = [
     introNote: 'Garden gets afternoon sun. I fix things the same week.',
     role: 'landlord',
     name: 'David Nolan',
-    avatarUrl: avatar('men/52'),
+    avatarUrl: portrait('1472099645785-5658abf4ff4e'),
     bio: 'Two places in Dublin 6 and a cottage in Stoneybatter. I reply within a day.',
     age: 45,
     occupation: 'Landlord',
@@ -104,7 +104,7 @@ const landlords: Profile[] = [
     id: 'p-aoife',
     role: 'landlord',
     name: 'Aoife Brennan',
-    avatarUrl: avatar('women/65'),
+    avatarUrl: portrait('1573496359142-b8d87734a5a2'),
     bio: 'Cork born, Galway based. Every flat freshly painted before you move in.',
     age: 39,
     occupation: 'Landlord',
@@ -114,7 +114,7 @@ const landlords: Profile[] = [
     id: 'p-ciaran',
     role: 'landlord',
     name: 'Ciarán Walsh',
-    avatarUrl: avatar('men/22'),
+    avatarUrl: portrait('1500648767791-00dcc994a43e'),
     bio: 'Rooms and family homes across Leinster. Happy to do evening viewings.',
     age: 31,
     occupation: 'Letting agent',
@@ -147,7 +147,7 @@ const tenants: Tenant[] = [
     id: 'p-maya',
     introNote: 'Designer, quiet, home most evenings. Looking for 12 months or more.',
     name: 'Maya Okafor',
-    avatarUrl: avatar('women/44'),
+    avatarUrl: portrait('1580489944761-15a19d654956'),
     age: 28,
     occupation: 'Product designer',
     bio: 'Designer at a Dublin startup. Quiet, tidy, far too many plants.',
@@ -156,7 +156,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-sam',
     name: 'Sam Murphy',
-    avatarUrl: avatar('men/75'),
+    avatarUrl: portrait('1539571696357-5a69c17a67c6'),
     age: 24,
     occupation: 'Graduate analyst',
     bio: '',
@@ -168,7 +168,7 @@ const tenants: Tenant[] = [
     id: 'p-niamh',
     introNote: 'Night-shift nurse, so quiet and tidy by necessity.',
     name: 'Niamh Kelly',
-    avatarUrl: avatar('women/68'),
+    avatarUrl: portrait('1438761681033-6461ffad8d80'),
     age: 31,
     occupation: "Nurse at St Vincent's",
     bio: 'Night shifts, so I value a quiet street. Non-smoker, no pets.',
@@ -177,7 +177,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-tom',
     name: 'Tom Gallagher',
-    avatarUrl: avatar('men/46'),
+    avatarUrl: portrait('1507003211169-0a1dd7228f2d'),
     age: 34,
     occupation: 'Secondary school teacher',
     bio: 'Teacher, cyclist, and owner of one very calm greyhound.',
@@ -186,7 +186,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-priya',
     name: 'Priya Nair',
-    avatarUrl: avatar('women/12'),
+    avatarUrl: portrait('1488426862026-3ee34a7d66df'),
     age: 27,
     occupation: 'Software engineer',
     bio: 'Moving from Bangalore for a new role. Love cooking, hate clutter.',
@@ -196,7 +196,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-conor',
     name: 'Conor Doyle',
-    avatarUrl: avatar('men/32'),
+    avatarUrl: portrait('1527980965255-d3b416303d12'),
     age: 29,
     occupation: 'Accountant',
     bio: 'Big on football, bigger on keeping the kitchen clean.',
@@ -205,7 +205,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-leah',
     name: 'Leah Byrne',
-    avatarUrl: avatar('women/29'),
+    avatarUrl: portrait('1517841905240-472988babdf9'),
     age: 26,
     occupation: 'PhD researcher at Trinity',
     bio: 'Mostly at the lab or the library. Looking for somewhere bright to write.',
@@ -214,7 +214,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-oisin',
     name: 'Oisín Ryan',
-    avatarUrl: avatar('men/61'),
+    avatarUrl: portrait('1492562080023-ab3db95bfbce'),
     age: 32,
     occupation: 'Head chef',
     bio: 'Late finishes, early mornings at the market. Will cook for viewings.',
@@ -223,7 +223,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-zara',
     name: 'Zara Ahmed',
-    avatarUrl: avatar('women/90'),
+    avatarUrl: portrait('1534528741775-53994a69daeb'),
     age: 30,
     occupation: 'Pharmacist',
     bio: 'Me, my partner and a very well-behaved cat.',
@@ -232,7 +232,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-jack',
     name: "Jack O'Brien",
-    avatarUrl: avatar('men/11'),
+    avatarUrl: portrait('1531427186611-ecfd6d936c79'),
     age: 25,
     occupation: 'Junior architect',
     bio: 'First place on my own. Will absolutely judge your cornicing.',
@@ -242,7 +242,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-sinead',
     name: 'Sinéad Power',
-    avatarUrl: avatar('women/53'),
+    avatarUrl: portrait('1508214751196-bcfd4ca60f91'),
     age: 33,
     occupation: 'GP',
     bio: 'Starting at a practice in Douglas in January. Two kids, one dog.',
@@ -251,7 +251,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-marek',
     name: 'Marek Nowak',
-    avatarUrl: avatar('men/85'),
+    avatarUrl: portrait('1506794778202-cad84cf45f1d'),
     age: 29,
     occupation: 'Data analyst',
     bio: 'Remote most days, so a proper desk spot matters. Sea air a bonus.',
@@ -260,7 +260,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-ana',
     name: 'Ana Costa',
-    avatarUrl: avatar('women/24'),
+    avatarUrl: portrait('1544005313-94ddf0286df2'),
     age: 24,
     occupation: 'Masters student at UCC',
     bio: 'Here for a one-year masters. Friendly, tidy, early riser.',
@@ -269,7 +269,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-fionn',
     name: 'Fionn Daly',
-    avatarUrl: avatar('men/41'),
+    avatarUrl: portrait('1557862921-37829c790f19'),
     age: 27,
     occupation: 'Physiotherapist',
     bio: 'Moving home to Limerick with my partner and our spaniel.',
@@ -278,7 +278,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-ellie',
     name: 'Ellie Moran',
-    avatarUrl: avatar('women/33'),
+    avatarUrl: portrait('1546961329-78bef0414d7c'),
     age: 23,
     occupation: 'Graduate engineer',
     bio: 'New job at Intel. Looking for a room in a sound house share.',
@@ -287,7 +287,7 @@ const tenants: Tenant[] = [
   tenant({
     id: 'p-rory',
     name: 'Rory Fitzgerald',
-    avatarUrl: avatar('men/67'),
+    avatarUrl: portrait('1504593811423-6dd665756598'),
     age: 35,
     occupation: 'Remote product manager',
     bio: 'Leaving Dublin for somewhere slower. Bringing a dog and a bike.',
@@ -580,6 +580,8 @@ export function createSeed(now = Date.now()): DbState {
     { actor: 'tenant', tenantId: 'p-leah', listingId: 'l-ranelagh', direction: 'right', createdAt: ago(240) },
     { actor: 'tenant', tenantId: 'p-marek', listingId: 'l-salthill', direction: 'right', createdAt: ago(600) },
     { actor: 'tenant', tenantId: 'p-ellie', listingId: 'l-maynooth', direction: 'right', createdAt: ago(90) },
+    // David already likes Maya for his Ranelagh studio → her Likes tab (one tap = instant match)
+    { actor: 'landlord', tenantId: 'p-maya', listingId: 'l-ranelagh', direction: 'right', createdAt: ago(25) },
     // Maya × Ciarán (Phibsborough) — existing match
     { actor: 'tenant', tenantId: 'p-maya', listingId: 'l-phibs', direction: 'right', createdAt: ago(1500) },
     { actor: 'landlord', tenantId: 'p-maya', listingId: 'l-phibs', direction: 'right', createdAt: ago(1400) },

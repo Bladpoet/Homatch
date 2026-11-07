@@ -7,6 +7,8 @@ import { newId } from './format';
 import { fit } from './score';
 import type {
   LandlordDeckItem,
+  LikeItem,
+  Likes,
   Listing,
   Match,
   MatchSummary,
@@ -102,7 +104,7 @@ export function applySwipe(s: DbState, input: SwipeInput, nowIso: string): { mat
   );
   s.swipes.push({ ...input, createdAt: nowIso });
 
-  const isLike = input.actor === 'tenant' && input.direction === 'right';
+  const isLike = input.direction === 'right'; // either side; the event goes to the other side
   if (input.direction !== 'right') return { isLike };
 
   const other = findSwipe(s, input.actor === 'tenant' ? 'landlord' : 'tenant', input.tenantId, input.listingId);
@@ -141,6 +143,63 @@ export function undoLastSwipe(s: DbState, actorId: string): Swipe | undefined {
     s.messages = s.messages.filter((x) => x.matchId !== m.id);
   }
   return removed;
+}
+
+// ── Likes tab ────────────────────────────────────────────────────────────
+
+/**
+ * Tenant: likedYou = landlords who said yes to me on listings I haven't swiped;
+ *         youLiked = listings I liked (matched or waiting — a landlord pass is never revealed).
+ * Landlord: likedYou = renters who liked my listings that I haven't swiped for that listing;
+ *           youLiked = renters I said yes to.
+ */
+export function likesFor(s: DbState, userId: string, opts?: { listingId?: string }): Likes {
+  const me = getProfile(s, userId);
+  const matchOf = (listingId: string, tenantId: string) =>
+    s.matches.find((m) => m.listingId === listingId && m.tenantId === tenantId);
+
+  const item = (w: Swipe, viewerIsTenant: boolean, liker: boolean): LikeItem => {
+    const listing = getListing(s, w.listingId);
+    const tenant = getTenant(s, w.tenantId);
+    const owner = getProfile(s, listing.ownerId);
+    const other = viewerIsTenant ? owner : tenant;
+    const m = matchOf(w.listingId, w.tenantId);
+    return {
+      id: `${w.listingId}:${w.tenantId}`,
+      listing,
+      tenant,
+      other,
+      fit: fit(tenant.prefs, listing),
+      at: w.createdAt,
+      status: m ? 'matched' : 'waiting',
+      matchId: m?.id,
+      note: liker ? other.introNote : undefined,
+    };
+  };
+  const newest = (a: LikeItem, b: LikeItem) => b.at.localeCompare(a.at);
+
+  if (me.role === 'tenant') {
+    const likedYou = s.swipes
+      .filter((w) => w.actor === 'landlord' && w.tenantId === userId && w.direction === 'right')
+      .filter((w) => !findSwipe(s, 'tenant', userId, w.listingId))
+      .map((w) => item(w, true, true));
+    const youLiked = s.swipes
+      .filter((w) => w.actor === 'tenant' && w.tenantId === userId && w.direction === 'right')
+      .map((w) => item(w, true, false));
+    return { likedYou: likedYou.sort(newest), youLiked: youLiked.sort(newest) };
+  }
+
+  const mine = new Set(
+    s.listings.filter((l) => l.ownerId === userId && (!opts?.listingId || l.id === opts.listingId)).map((l) => l.id),
+  );
+  const likedYou = s.swipes
+    .filter((w) => w.actor === 'tenant' && w.direction === 'right' && mine.has(w.listingId))
+    .filter((w) => !findSwipe(s, 'landlord', w.tenantId, w.listingId))
+    .map((w) => item(w, false, true));
+  const youLiked = s.swipes
+    .filter((w) => w.actor === 'landlord' && w.direction === 'right' && mine.has(w.listingId))
+    .map((w) => item(w, false, false));
+  return { likedYou: likedYou.sort(newest), youLiked: youLiked.sort(newest) };
 }
 
 // ── Matches & chat ───────────────────────────────────────────────────────

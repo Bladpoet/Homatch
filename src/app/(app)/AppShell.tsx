@@ -3,24 +3,27 @@
 // Kamsi's BottomNav and Jazz's MatchOverlay.
 // - Listens for realtime events once, for the whole app.
 // - Shows the match overlay for BOTH people (deduped by match id).
-// - Keeps the Matches tab badge fresh.
-import { useRouter } from 'next/navigation';
+// - Keeps the Likes and Matches tab badges fresh.
+import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
 import { MatchOverlay } from '@/components/match/MatchOverlay';
 import { BottomNav } from '@/components/ui/BottomNav';
-import { getMatches } from '@/lib/api';
+import { getLikes, getMatches } from '@/lib/api';
 import { useAppEvents, useAsync, useRequireUser } from '@/lib/hooks';
 import { UserProvider } from '@/lib/session';
 import type { MatchSummary } from '@/lib/types';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useRequireUser();
   const [overlay, setOverlay] = useState<MatchSummary | null>(null);
   const seen = useRef(new Set<string>());
 
   const matches = useAsync(() => (user ? getMatches(user.id) : Promise.resolve([])), [user?.id]);
   const badge = (matches.data ?? []).filter((m) => m.unread || !m.lastMessage).length;
+  const likes = useAsync(() => (user ? getLikes(user.id) : Promise.resolve(null)), [user?.id, pathname]);
+  const likesBadge = likes.data?.likedYou.length ?? 0;
 
   useAppEvents(user?.id, (e) => {
     if (e.type === 'match' && !seen.current.has(e.match.id)) {
@@ -33,6 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       seen.current.clear();
     }
     void matches.reload();
+    if (e.type === 'like' || e.type === 'match' || e.type === 'reset') void likes.reload();
   });
 
   const close = useCallback(() => setOverlay(null), []);
@@ -42,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <UserProvider value={user}>
       <main className="relative flex min-h-0 flex-1 flex-col">{children}</main>
-      <BottomNav matchesBadge={badge} />
+      <BottomNav matchesBadge={badge} likesBadge={likesBadge} />
       <MatchOverlay
         summary={overlay}
         viewerRole={user.role}

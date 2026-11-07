@@ -101,6 +101,25 @@ export interface Fit {
 
 export type AiFitInput = { tenantId: string; listingId: string; viewer: Role };
 
+/** One like on the Likes tab, always about a (listing, tenant) pair. */
+export interface LikeItem {
+  id: string; // `${listingId}:${tenantId}`
+  listing: Listing;
+  tenant: Tenant;
+  /** The person on the other side: the landlord for tenants, the renter for landlords. */
+  other: Profile;
+  fit: Fit;
+  at: string;
+  status: 'waiting' | 'matched';
+  matchId?: string;
+  /** The other side's intro note — only present when THEY liked you. */
+  note?: string;
+}
+export interface Likes {
+  likedYou: LikeItem[];
+  youLiked: LikeItem[];
+}
+
 export interface TenantDeckItem {
   kind: 'listing';
   listing: Listing;
@@ -123,7 +142,8 @@ export interface MatchSummary {
 export type AppEvent =
   | { type: 'match'; match: Match; summary: MatchSummary }
   | { type: 'message'; message: Message }
-  | { type: 'like'; listingId: string; tenantId: string }
+  /** A like landed. by 'tenant' (default) → sent to the landlord; by 'landlord' → sent to the tenant. */
+  | { type: 'like'; listingId: string; tenantId: string; by?: Role }
   | { type: 'reset' }; // demo data was reset; refetch everything
 
 export interface SwipeInput {
