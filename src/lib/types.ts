@@ -93,7 +93,13 @@ export interface FitReason {
 export interface Fit {
   score: number; // 0–100
   reasons: FitReason[]; // ok first, then by importance
+  /** undefined/'rules' = instant rule score; 'ai' = refined by /api/fit */
+  source?: 'rules' | 'ai';
+  /** AI one-liner (≤60 chars), written for whoever is looking */
+  headline?: string;
 }
+
+export type AiFitInput = { tenantId: string; listingId: string; viewer: Role };
 
 export interface TenantDeckItem {
   kind: 'listing';

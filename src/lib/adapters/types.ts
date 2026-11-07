@@ -1,5 +1,7 @@
 import type {
+  AiFitInput,
   AppEvent,
+  Fit,
   LandlordDeckItem,
   Listing,
   MatchSummary,
@@ -51,6 +53,9 @@ export interface DataAdapter {
   getMessages(matchId: string): Promise<Message[]>;
   sendMessage(matchId: string, senderId: string, body: string): Promise<Message>;
   markRead(matchId: string, userId: string): Promise<void>;
+
+  // AI fit — cached, never throws (falls back to the rule fit)
+  getAiFit(input: AiFitInput): Promise<Fit>;
 
   // realtime
   subscribe(userId: string, handler: (e: AppEvent) => void): () => void;

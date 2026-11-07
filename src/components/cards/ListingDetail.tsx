@@ -44,7 +44,11 @@ export function ListingDetail({ listing, owner, fit, open, onClose, onPass, onLi
           <Spec k="Furnished" v={listing.furnished ? 'Yes' : 'No'} />
         </dl>
         <section>
-          <h3 className="mb-2 text-label font-semibold">Why it fits you</h3>
+          <h3 className="mb-2 flex items-center gap-1.5 text-label font-semibold">
+            Why it fits you
+            <span className="rounded-chip bg-surface-2 px-2 py-0.5 text-caption font-bold">{fit.score}%</span>
+          </h3>
+          {fit.headline && <p className="mb-2.5 text-body font-medium">✦ {fit.headline}</p>}
           <ReasonChips fit={fit} max={6} />
         </section>
         <p className="text-body">{listing.description}</p>

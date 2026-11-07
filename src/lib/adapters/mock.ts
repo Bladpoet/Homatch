@@ -6,7 +6,8 @@
 import * as engine from '../engine';
 import { createSeed, SEED_VERSION, type DbState } from '../fixtures';
 import { newId } from '../format';
-import type { AppEvent, Listing } from '../types';
+import { fit } from '../score';
+import type { AiFitInput, AppEvent, Fit, Listing } from '../types';
 import type { DataAdapter } from './types';
 
 const DATA_KEY = 'homatch:v1';
@@ -130,6 +131,70 @@ function toAppEvent(raw: RawEvent, userId: string): AppEvent | null {
 
 const now = () => new Date().toISOString();
 
+// ── AI fit (calls /api/fit; cached per tenant × listing × viewer × inputs) ──
+
+const AI_CACHE = 'homatch:aifit:v1:';
+const aiInflight = new Map<string, Promise<Fit>>();
+
+function hash(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+async function aiFit({ tenantId, listingId, viewer }: AiFitInput): Promise<Fit> {
+  const s = load();
+  const t = engine.getTenant(s, tenantId);
+  const l = engine.getListing(s, listingId);
+  const rules = fit(t.prefs, l);
+
+  const seeded = s.aiFits?.[`${viewer}:${tenantId}:${listingId}`];
+  if (seeded) return seeded;
+  if (!isBrowser()) return rules;
+
+  const key = `${AI_CACHE}${viewer}:${tenantId}:${listingId}:${hash(JSON.stringify([t.prefs, t.bio, t.introNote, l.description, l.rent]))}`;
+  try {
+    const cached = window.localStorage.getItem(key);
+    if (cached) return JSON.parse(cached) as Fit;
+  } catch {
+    /* ignore */
+  }
+  const pending = aiInflight.get(key);
+  if (pending) return pending;
+
+  const request = (async () => {
+    try {
+      const res = await fetch('/api/fit', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          viewer,
+          tenant: { name: t.name, prefs: t.prefs, bio: t.bio, occupation: t.occupation, introNote: t.introNote },
+          listing: l,
+          rules,
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) return rules;
+      const result = (await res.json()) as Fit;
+      if (result.source === 'ai') {
+        try {
+          window.localStorage.setItem(key, JSON.stringify(result));
+        } catch {
+          /* quota */
+        }
+      }
+      return result;
+    } catch {
+      return rules;
+    } finally {
+      aiInflight.delete(key);
+    }
+  })();
+  aiInflight.set(key, request);
+  return request;
+}
+
 // ── Adapter ──────────────────────────────────────────────────────────────
 
 export const mockAdapter: DataAdapter = {
@@ -238,6 +303,8 @@ export const mockAdapter: DataAdapter = {
       s.reads[`${matchId}:${userId}`] = now();
     });
   },
+
+  getAiFit: aiFit,
 
   subscribe(userId, handler) {
     getChannel();

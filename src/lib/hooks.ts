@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getCurrentUser, subscribe } from './api';
-import type { AppEvent, Profile, Role } from './types';
+import { getAiFit, getCurrentUser, subscribe } from './api';
+import type { AiFitInput, AppEvent, Fit, Profile, Role } from './types';
 
 /** The persona picked on /demo for this tab. */
 export function useCurrentUser() {
@@ -46,6 +46,49 @@ export function useAppEvents(userId: string | undefined, handler: (e: AppEvent) 
     if (!userId) return;
     return subscribe(userId, (e) => ref.current(e));
   }, [userId]);
+}
+
+/**
+ * Upgrade the first `ahead` deck items to AI fit, in place, as results arrive.
+ * Remembers results so a deck reload doesn't lose them. Never blocks the deck.
+ */
+export function useAiUpgrade<T>(
+  items: T[] | undefined,
+  opts: {
+    inputOf: (item: T) => AiFitInput | null;
+    fitOf: (item: T) => Fit | undefined;
+    apply: (item: T, fit: Fit) => void;
+    ahead?: number;
+  },
+) {
+  const optsRef = useRef(opts);
+  useEffect(() => {
+    optsRef.current = opts;
+  });
+  const results = useRef(new Map<string, Fit>());
+  const requested = useRef(new Set<string>());
+
+  useEffect(() => {
+    if (!items) return;
+    const { inputOf, fitOf, apply, ahead = 3 } = optsRef.current;
+    for (const item of items.slice(0, ahead)) {
+      const input = inputOf(item);
+      if (!input || fitOf(item)?.source === 'ai') continue;
+      const k = `${input.viewer}:${input.tenantId}:${input.listingId}`;
+      const known = results.current.get(k);
+      if (known) {
+        apply(item, known);
+        continue;
+      }
+      if (requested.current.has(k)) continue;
+      requested.current.add(k);
+      getAiFit(input).then((fit) => {
+        if (fit.source !== 'ai') return;
+        results.current.set(k, fit);
+        optsRef.current.apply(item, fit);
+      });
+    }
+  }, [items]);
 }
 
 /** Load async data with a refetch function. Keeps the previous data while refetching. */

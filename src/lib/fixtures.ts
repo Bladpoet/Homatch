@@ -8,7 +8,7 @@
 // - Maya and David each have one existing match with a short conversation.
 // - Sam is not onboarded, for showing onboarding live.
 
-import type { Listing, Match, Message, Profile, Swipe, Tenant, TenantPrefs } from './types';
+import type { Fit, Listing, Match, Message, Profile, Swipe, Tenant, TenantPrefs } from './types';
 
 export interface DbState {
   version: number;
@@ -21,9 +21,36 @@ export interface DbState {
   messages: Message[];
   /** `${matchId}:${userId}` → ISO time that user last opened the chat */
   reads: Record<string, string>;
+  /** Pre-computed AI fits, `${viewer}:${tenantId}:${listingId}` → Fit. Keeps the demo pair working offline. */
+  aiFits?: Record<string, Fit>;
 }
 
-export const SEED_VERSION = 2;
+export const SEED_VERSION = 3;
+
+const SEED_AI_FITS: Record<string, Fit> = {
+  'tenant:p-maya:l-sunny': {
+    score: 94,
+    source: 'ai',
+    headline: 'Sunny garden and a quiet road, made for your plants',
+    reasons: [
+      { label: 'Private sunny garden', ok: true },
+      { label: 'Quiet Victorian road', ok: true },
+      { label: 'Free before 1 Dec', ok: true },
+      { label: '€50 over budget', ok: false },
+    ],
+  },
+  'landlord:p-maya:l-sunny': {
+    score: 95,
+    source: 'ai',
+    headline: 'Quiet, tidy designer who wants 12+ months',
+    reasons: [
+      { label: 'Wants 12+ months', ok: true },
+      { label: 'Quiet and tidy', ok: true },
+      { label: 'Moves in by 1 Dec', ok: true },
+      { label: '€50 over her max', ok: false },
+    ],
+  },
+};
 
 // TODO(C1): curate photos. These all load, but they aren't Irish homes.
 const photo = (id: string) =>
@@ -583,6 +610,7 @@ export function createSeed(now = Date.now()): DbState {
     swipes,
     matches,
     messages,
+    aiFits: SEED_AI_FITS,
     reads: {
       'm-maya-phibs:p-ciaran': ago(90),
       'm-conor-stoney:p-david': ago(1700),

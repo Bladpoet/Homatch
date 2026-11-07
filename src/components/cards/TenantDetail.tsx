@@ -34,7 +34,17 @@ export function TenantDetail({ tenant, fit, open, onClose, onPass, onLike }: Ten
           {tenant.bio && <p className="mt-2 text-body">{tenant.bio}</p>}
         </div>
         <section>
-          <h3 className="mb-2 text-label font-semibold">Why they fit this place</h3>
+          <h3 className="mb-2 flex items-center gap-1.5 text-label font-semibold">
+            Why they fit this place
+            <span className="rounded-chip bg-surface-2 px-2 py-0.5 text-caption font-bold">{fit.score}%</span>
+          </h3>
+          {fit.headline && <p className="mb-2.5 text-body font-medium">✦ {fit.headline}</p>}
+          {tenant.introNote && (
+            <blockquote className="mb-3 rounded-card bg-surface-2 px-4 py-3 text-body italic">
+              <span className="mb-1 block text-caption font-semibold text-ink-muted not-italic">A note from {tenant.name.split(' ')[0]}</span>
+              &ldquo;{tenant.introNote}&rdquo;
+            </blockquote>
+          )}
           <ReasonChips fit={fit} max={6} />
         </section>
         <dl className="grid grid-cols-2 gap-3 text-label">

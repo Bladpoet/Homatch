@@ -16,7 +16,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { cx } from '@/components/ui/cx';
 import { getLandlordDeck, getLandlordListings, getLikeCount, getTenantDeck, swipe, undoLastSwipe } from '@/lib/api';
 import { formatRent } from '@/lib/format';
-import { useAppEvents, useAsync } from '@/lib/hooks';
+import { useAiUpgrade, useAppEvents, useAsync } from '@/lib/hooks';
 import { useUser } from '@/lib/session';
 import type { Direction, LandlordDeckItem, Listing, Profile, TenantDeckItem } from '@/lib/types';
 
@@ -42,6 +42,13 @@ function TenantDiscover({ user }: { user: Profile }) {
   });
 
   const { setData, reload } = deck;
+
+  useAiUpgrade(deck.data, {
+    inputOf: (i) => ({ tenantId: user.id, listingId: i.listing.id, viewer: 'tenant' }),
+    fitOf: (i) => i.fit,
+    apply: (item, fit) => setData((prev = []) => prev.map((i) => (i.listing.id === item.listing.id ? { ...i, fit } : i))),
+  });
+
   const onSwipe = useCallback(
     (item: TenantDeckItem, direction: Direction) => {
       // Filter by id, not identity: a refetch may have replaced the objects mid-animation.
@@ -159,6 +166,14 @@ function LandlordDiscover({ user }: { user: Profile }) {
   });
 
   const { setData, reload } = deck;
+
+  useAiUpgrade(deck.data, {
+    inputOf: (i) => (i.kind === 'tenant' && activeId ? { tenantId: i.tenant.id, listingId: activeId, viewer: 'landlord' } : null),
+    fitOf: (i) => (i.kind === 'tenant' ? i.fit : undefined),
+    apply: (item, fit) =>
+      setData((prev = []) => prev.map((i) => (i.kind === 'tenant' && keyOf(i) === keyOf(item) ? { ...i, fit } : i))),
+  });
+
   const onSwipe = useCallback(
     (item: LandlordDeckItem, direction: Direction) => {
       setData((prev = []) => prev.filter((i) => keyOf(i) !== keyOf(item)));
