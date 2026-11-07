@@ -3,7 +3,7 @@
 **Read this first.** Then read, in order:
 1. `docs/PRODUCT.md`: what we're building, every screen, and the interaction spec
 2. `docs/CONTRACTS.md`: types, the data API, DB schema, and matching rules
-3. `docs/TASKS.md`: find your task card (ID like `J1`, `K5`, `C2`) and do only that
+3. `docs/tasks/README.md`: where the team is right now, plus the shared tasks. Then **your own file**: `docs/tasks/coleman.md`, `jazz.md`, or `kamsi.md`. Do only the task card you were given.
 
 ## The product in one paragraph
 Homatch is swipe-to-match for renting. **Tenants** (house hunters) set their preferences once, then swipe on homes. **Landlords** (and anyone listing a room) swipe on tenants. Their deck starts with the tenants who already liked their listing, then continues into a **discovery pool** of renters whose preferences fit, so a landlord never runs out of cards. When both sides swipe right on the same (listing, tenant) pair, they **match** and can chat. We're building it in one day for a hackathon demo (Devin × give(a)go). **Priority order: 1) the demo loop works, 2) UI and interactions feel great, 3) everything else.**
@@ -41,10 +41,11 @@ Homatch is swipe-to-match for renting. **Tenants** (house hunters) set their pre
 | Tokens, UI kit, app shell, onboarding, matches, chat | **Kamsi** | `src/styles/**`, `src/components/ui/**`, `src/components/chat/**`, `src/app/(app)/matches/**`, `src/app/(app)/chat/**`, `src/app/onboarding/**` |
 | Discover page and app layout wiring | **Coleman** (renders Jazz's and Kamsi's components) | `src/app/(app)/discover/**`, `src/app/(app)/layout.tsx` |
 | UI kit showcase | **Kamsi** | `src/app/kit/**` |
+| Typeface setup | **Kamsi** | `src/app/layout.tsx` (the font only) |
 | Deck-specific tokens | **Jazz** | `src/styles/deck.tokens.css` |
 | Landlord listing flows and profile | **Coleman** (uses Kamsi's UI kit) | `src/app/(app)/profile/**`, `src/app/onboarding/landlord/**` |
 
-**Shared files** (`package.json`, `types.ts`, `api.ts`, `tokens.css`): see `docs/TASKS.md` → Merging. **When you replace a stub component, keep its props exactly** as in `CONTRACTS.md` → Component contracts.
+**Shared files** (`package.json`, `types.ts`, `api.ts`, `tokens.css`): see `docs/tasks/README.md` → Merging. **When you replace a stub component, keep its props exactly** as in `CONTRACTS.md` → Component contracts.
 
 ## The skeleton is built
 Every file below exists, and the whole demo loop already works on mock data in two tabs. Components marked `STUB(C0)` are working placeholders with their **final props**. Replace their internals and keep the props. See `docs/CONTRACTS.md` → "How the code is laid out" for what lives where (`api.ts`, `engine.ts`, `hooks.ts`, `useUser()`, and so on).
