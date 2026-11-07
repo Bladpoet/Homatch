@@ -69,9 +69,15 @@ export default function ChatPage() {
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {s && list.length === 0 && (
-          <p className="px-8 pt-10 text-center text-label text-ink-muted">
-            You matched with {s.other.name.split(' ')[0]}. Say hello.
-          </p>
+          <div className="space-y-4 px-6 pt-10 text-center">
+            <p className="text-label text-ink-muted">You matched with {s.other.name.split(' ')[0]}. Say hello.</p>
+            {s.other.introNote && (
+              <blockquote className="mx-auto max-w-[30ch] rounded-card bg-surface px-4 py-3 text-body italic shadow-[0_1px_2px_rgb(0_0_0/0.06)]">
+                <span className="mb-1 block text-caption font-semibold text-ink-muted not-italic">A note from {s.other.name.split(' ')[0]}</span>
+                &ldquo;{s.other.introNote}&rdquo;
+              </blockquote>
+            )}
+          </div>
         )}
         <ChatThread messages={list} meId={user.id} />
       </div>
