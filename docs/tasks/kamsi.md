@@ -4,7 +4,11 @@
 
 **You own:** `src/styles/**` (except `deck.tokens.css`), `src/components/ui/**`, `src/components/chat/**`, `src/app/kit/**`, `src/app/(app)/matches/**`, `src/app/(app)/chat/**`, `src/app/onboarding/tenant/**`.
 
-**Your job today:** decide how Homatch **looks and feels** everywhere outside the deck. Your tokens restyle the whole app at once, because every screen already uses them.
+**Your job today:** decide how Homatch **looks and feels** everywhere outside the deck. Your tokens restyle the whole app at once, because every screen already uses them. **Onboarding is now P0**: a clean, tap-and-slider flow built from your references.
+
+**Order:** G1 → K0 (tokens) → K1a (core kit) → **K2 (onboarding)** → K1b (nav with 4 tabs, Segmented, RangeSlider; start RangeSlider inside K2) → K3 / K4 (matches, chat) → K5.
+
+If you run short on time, K3 and K4 are already wired and work. They only need visual polish, so they can slip before K2 does.
 
 ## Where your lane stands
 | File | What exists now | What you build |
@@ -45,7 +49,8 @@ Button, IconButton, Chip, Avatar, and **Sheet** (spring open at 300/30; drag dow
 **Accept:** every state is visible on `/kit`. Sheets open and close smoothly on a phone.
 
 ### K1b · Shell + remaining kit · P0 · by CP3
-- `BottomNav` with a sliding active indicator and the badge
+- `BottomNav` has **4 tabs now: Discover · Likes · Matches · Profile**. Use a heart for the Likes icon. It gets a sliding active indicator and badges, via `matchesBadge` and the new `likesBadge` prop.
+- **Segmented** (Likes tabs with counts) and **RangeSlider** (onboarding budget) come first, because Coleman's `/likes` and your K2 need them. Their props are in `CONTRACTS.md`.
 - `PhoneFrame`: the desktop frame should look good on the demo laptop
 - New components on `/kit`: Segmented, Input, RangeSlider (dual handle), Stepper, Toast
 
@@ -65,16 +70,35 @@ Design the existing page: the New matches row (tenants see the home photo, landl
 
 **Accept:** messages appear in both tabs within 1 second (already true), quick replies send in one tap, and it looks great.
 
-### K2 · Tenant onboarding · P1 · by CP4 (a floater, so hand it off if someone's free)
-The 5-step stepper from `PRODUCT.md` §1:
-1. Budget (RangeSlider)
-2. Areas (chips grouped by region from `config.REGIONS`)
-3. Move-in and lease
-4. Household, pets, smoker
-5. Photo and bio
+### K2 · Tenant onboarding · **P0** · by CP3 (start right after K1a)
+**References first:** check `docs/design/references/onboarding/`. If they're there, match them closely. If they aren't, ask Kamsi or the team.
 
-Steps slide horizontally. Save with `saveTenantPrefs(user.id, prefs)`, then show "Finding homes that fit you…" and go to `/discover`. Use `useCurrentUser()` from `src/lib/hooks.ts`.
-**Accept:** Sam goes from `/demo` to a deck in under 30 seconds, and his choices change what's in his deck.
+The full step list is in `PRODUCT.md` §1. In short:
+1. Who's moving?
+2. Budget (RangeSlider)
+3. Where? (region-grouped chips from `config.REGIONS`)
+4. When? (move-in and lease chips)
+5. Bedrooms
+6. Pets and smoker toggles
+7. **Intro note** (optional, 140 characters, with tappable starters)
+8. Photo (preset avatars)
+
+**Feel**
+- It's clean and almost typing-free.
+- Single-select questions auto-advance after about 250ms.
+- Multi-select questions have a Continue button, disabled until something is chosen.
+- Steps slide horizontally with your motion tokens. Back is a chevron, optional steps have Skip, and a thin progress bar sits on top.
+
+**Wiring**
+- Use `useCurrentUser()` from `src/lib/hooks.ts`.
+- Save with `saveTenantPrefs(user.id, prefs, { avatarUrl })` and `saveProfile(user.id, { introNote })`. `saveProfile` is new; if C7 hasn't landed yet, pass `introNote` in the third argument of `saveTenantPrefs`.
+- Finish on "Finding homes that fit you…" (a sparkle and shuffling thumbnails, about 1.5s), then `router.replace('/discover')`.
+- Build the controls (Chip groups, RangeSlider, toggle) so they can be **reused on `/profile`**.
+
+**Accept:**
+- Sam goes from `/demo` to a deck in under 30 seconds with mostly taps.
+- His choices visibly change his deck.
+- It looks like the references.
 
 ### K5 · Empty states, loading, copy · P1 · by CP4
 Every screen gets a designed empty state and a skeleton. Do one copy pass in Irish/UK English: flat, viewing, bills.

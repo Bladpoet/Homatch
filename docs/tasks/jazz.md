@@ -6,6 +6,8 @@
 
 **Your job today:** make swiping **feel incredible**. The drag, the stamps, the fly-out, the card behind growing, and the "It's a match" moment are what judges remember. Everything else in the app already works around you.
 
+**Order:** G1 → J1 (deck) → J2 / J3 (cards) → J5 (match) → **J7 (AI fit on cards, Like tiles)** → J4 (sheets) → J6 (polish).
+
 ## Where your lane stands
 Every component you own exists as a **working stub with its final props**, already used by the real pages:
 
@@ -79,6 +81,31 @@ Props stay `{ summary, viewerRole, onMessage, onClose }`.
 A shared-element expand from the card photo (`layoutId`) into `ListingDetail` and `TenantDetail`. Drag down to dismiss. The pinned Pass and Interested buttons close the sheet, **then** fly the card out.
 **Coordinate with Kamsi:** she owns `Sheet` (K1a). Either build on her Sheet, or use your own motion container for these two and tell her.
 **Accept:** opening and closing doesn't jump, and liking from the sheet animates the card out.
+
+### J7 · AI fit on cards + Like tiles · P0 · by CP3
+Spec: `docs/PRODUCT.md` → Discover "AI fit on cards" and 5b Likes. The contracts are in `CONTRACTS.md`.
+
+**AI fit on cards**
+- `FitPill` gets an optional `ai` prop that shows a small sparkle.
+- `ListingCard` and `TenantCard` render `fit.headline` when it's present: one line above the reason chips, fading in with a 4px rise when it first appears.
+- The upgrade happens **while the card is on screen**, so the swap must not jump the layout. Reserve the headline's line height, or animate the height.
+- **Detail sheets:** the "Why it fits" section shows the headline first, then all the reasons.
+
+**Like tiles**
+- Build `cards/LikeTile.tsx` with props `{ item: LikeItem; viewerRole; onOpen }`.
+- It's a photo tile for the 2-column grid on `/likes`:
+  - The photo shows the listing for tenants and the person for landlords.
+  - Underneath: the rent or name, a fit chip, and a status chip (**Waiting** or **Matched**).
+  - If the tile has a `note`, show it as a one-line quote.
+- New items animate in (scale from 0.96 and fade) when a like arrives live.
+- Coleman wires the page (C7). If he gets there first, he'll leave a stub with the same props for you to replace.
+
+**Intro note in detail sheets:** when the other person has written one, `ListingDetail` and `TenantDetail` show "A note from {name}: …" as a quoted card. Use the optional `note` prop, which is new and may be absent.
+
+**Accept:**
+- On `/discover`, the AI headline appears without layout jump.
+- On `/likes`, tiles look great in both views and with long names and notes.
+- In reduced-motion mode, every animation becomes a fade.
 
 ### J6 · Deck polish · P1 · by CP4
 Preload the next 2 cards' photos, so there's no flash between cards. Also do the empty-state design, stamp typography, stack shadow depth, and a test on a real phone.

@@ -36,7 +36,7 @@ Homatch is swipe-to-match for renting. **Tenants** (house hunters) set their pre
 ## Ownership
 | Area | Owner | Paths |
 |---|---|---|
-| Data, matching, realtime, seed, deploy | **Coleman** | `src/lib/**`, `supabase/**`, `src/app/demo/**`, `src/app/api/**` |
+| Data, matching, realtime, seed, deploy | **Coleman** | `src/lib/**`, `supabase/**`, `src/app/demo/**`, `src/app/api/**` (incl. AI fit route), `src/app/(app)/likes/**` |
 | Swipe deck, cards, detail sheets, match overlay | **Jazz** | `src/components/deck/**`, `src/components/cards/**`, `src/components/match/**`, `src/app/playground/**` |
 | Tokens, UI kit, app shell, onboarding, matches, chat | **Kamsi** | `src/styles/**`, `src/components/ui/**`, `src/components/chat/**`, `src/app/(app)/matches/**`, `src/app/(app)/chat/**`, `src/app/onboarding/**` |
 | Discover page and app layout wiring | **Coleman** (renders Jazz's and Kamsi's components) | `src/app/(app)/discover/**`, `src/app/(app)/layout.tsx` |

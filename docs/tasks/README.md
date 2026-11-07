@@ -26,19 +26,32 @@ The **skeleton is built, tested, and on `main`.** The whole demo loop works toda
 - **Supabase**, so no real phones yet, and a **Vercel deploy**
 - Irish-looking photos. The current ones are generic stock.
 
-| Task | Owner | Status |
-|---|---|---|
-| C0 Scaffold, contracts, stubs | Coleman | ✅ done |
-| C2 Swipe, match, events | Coleman | ✅ done (hardening optional) |
-| C3 Discover wiring | Coleman | ✅ done |
-| C1 Photos, seed, /demo polish | Coleman | 🟡 to do |
-| C5a Link Vercel | Coleman | 🔴 **do first, 5 min** |
-| C4 Supabase | Coleman | 🔴 to do |
-| G1 Visual direction | Jazz + Kamsi | 🔴 **do first, 30 min** |
-| J1–J6 Deck, cards, overlay, sheets | Jazz | 🔴 to do (stubs in place) |
-| K0–K5 Tokens, kit, shell, matches, chat, onboarding | Kamsi | 🔴 to do (stubs in place) |
+| Task | Owner | Priority | Status |
+|---|---|---|---|
+| C0 Scaffold, contracts, stubs | Coleman | P0 | ✅ done |
+| C2 Swipe, match, events | Coleman | P0 | ✅ done (hardening optional) |
+| C3 Discover wiring | Coleman | P0 | ✅ done |
+| C5a Link Vercel | Coleman | P0 | 🔴 **do first, 5 min** |
+| **C8 AI fit** (API route, cache, deck upgrade) | Coleman | **P0 (new)** | 🔴 to do |
+| **C7 Likes tab** (data, page, intro note data) | Coleman | **P0 (new)** | 🔴 to do |
+| C1 Photos, seed, /demo polish | Coleman | P0 | 🟡 to do |
+| C4 Supabase (real phones) | Coleman | P1 (was P0) | 🔴 after C7/C8 |
+| G1 Visual direction | Jazz + Kamsi | P0 | 🔴 **do first, 30 min** |
+| J1–J6 Deck, cards, overlay, sheets | Jazz | P0/P1 | 🔴 to do (stubs in place) |
+| **J7 Like tiles + AI fit on cards** | Jazz | **P0 (new)** | 🔴 to do |
+| K0–K1 Tokens, kit, shell (now 4 tabs) | Kamsi | P0 | 🔴 to do (stubs in place) |
+| **K2 Onboarding** (select and sliders, intro note) | Kamsi | **P0 (was P1)** | 🔴 to do. **Waiting on references** |
+| K3–K5 Matches, chat, polish | Kamsi | P0/P1 | 🔴 to do (wired, needs design) |
 
 _Update this table when you merge._
+
+### New since the skeleton: read `docs/PRODUCT.md`
+- **AI fit** (PRODUCT → AI fit): Claude refines the fit score and writes a one-line headline for each card. Rules stay as the instant fallback.
+- **Likes tab** (PRODUCT → 5b): two tabs, **Liked you** and **You liked**, with sorting. Liking back is an instant match.
+- **Intro note** (PRODUCT → Intro note): a 140-character note on your profile, which only people you've liked can see.
+- **Onboarding** becomes P0: clean, almost typing-free, built from taps and sliders. The design references go in `docs/design/references/onboarding/`.
+- **Nav is now 4 tabs:** Discover · Likes · Matches · Profile.
+- **No Explore or Top houses tab.** See PRODUCT → Decisions. Quick-filter chips and a "Top pick" badge (P2) cover it instead.
 
 ---
 
@@ -68,7 +81,7 @@ Times are relative to now (T). If the demo slot moves, move these with it.
 | ~~CP1~~ | ~~Foundations~~ | ✅ The scaffold, stubs, and seed are on `main` |
 | ~~CP2~~ | ~~Ugly loop~~ | ✅ The full loop works in two tabs |
 | **T+0:45** | **CP2.5: Direction set** | The visual direction is agreed (G1), tokens v1 are merged (K0), and the Vercel URL is live (C5a) |
-| **T+2:30** | **CP3: Looks real** | Real swiping (J1), real cards (J2, J3), match overlay (J5), core kit (K1a), Matches and Chat styled (K3, K4). **Decide here:** demo on Supabase or on mock (two tabs). |
+| **T+2:30** | **CP3: Looks real** | Real swiping (J1), real cards with AI headlines (J2, J3, C8), match overlay (J5), core kit (K1a), Likes tab working (C7, J7), onboarding flow (K2), Matches and Chat styled (K3, K4). **Decide here:** demo on Supabase or on mock (two tabs). |
 | **T+3:30** | **CP4: Feature freeze** | Bug fixes and polish only from here. Record the backup video (G4). |
 | **T+4:00** | **CP5: Rehearse** | Run the demo script 3 times (G5). Reset the seed. |
 
@@ -83,8 +96,10 @@ Agree on the mood, color, type, and **card anatomy**. Mock up five frames in Fig
 
 **Accept:** Kamsi can write tokens v1 from it, and Jazz can build cards from it.
 
-### G2 · Decide the open questions · whole team · 5 min
-- From the original brief, *"complete someone that you like … with a random person"* didn't come through clearly. Does it mean a "Likes you" grid for tenants, a super-like with a note, or nothing? If it's either of the first two, add it as a P2 task in the right person's file.
+### G2 · Remaining open questions · whole team · 5 min
+- ~~Likes grid / note with a like~~ **Decided:** we're building the Likes tab and the intro note.
+- **AI fit model:** `claude-opus-5-5` at low effort is the default. If card upgrades feel slow on stage, switch to `claude-haiku-5-5`.
+- **Onboarding references:** whoever has them, drop them in `docs/design/references/onboarding/` (or link a Figma there) **before Kamsi starts K2**.
 - The name: we're going with Homatch unless someone objects.
 
 ### G3 · Polish list · everyone · ongoing
@@ -119,9 +134,10 @@ Run the demo script 3 times, and agree who drives which screen. Before you go on
 - Pull `main` before starting each new task.
 
 ## P2 ideas (only if CP4 is safe)
-- Tenants see "Landlord interested" on a listing whose landlord already liked them
+- **Quick filters on Discover:** a chip row with All · Under €1,500 · Pets OK · House shares · Available now. This replaces an Explore tab.
+- **"Top pick" badge** on cards with AI fit ≥ 90
+- "Landlord interested" hint on a card whose landlord already liked you (the Likes tab covers this already)
 - "AI write my description" on create listing
-- A "Likes you" grid for tenants (see G2)
 - Landlord matches filtered by listing
 - A "Propose viewing" card in chat (K6)
 

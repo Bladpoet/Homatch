@@ -16,6 +16,7 @@ export interface Profile {
   age?: number;
   occupation?: string;
   onboarded: boolean;
+  introNote?: string;       // NEW (P1): ≤140 chars, shown only to people this user has liked
 }
 
 export interface TenantPrefs {
@@ -81,7 +82,26 @@ export interface Message {
 }
 
 export interface FitReason { label: string; ok: boolean }
-export interface Fit { score: number; reasons: FitReason[] }   // score 0–100
+export interface Fit {
+  score: number;            // 0–100
+  reasons: FitReason[];
+  source?: 'rules' | 'ai';  // NEW: undefined/'rules' = instant score; 'ai' = upgraded by /api/fit
+  headline?: string;        // NEW: AI one-liner (≤60 chars) for the card, written for the viewer
+}
+
+// NEW (P0): the Likes tab
+export interface LikeItem {
+  id: string;               // `${listingId}:${tenantId}`
+  listing: Listing;
+  tenant: Tenant;
+  other: Profile;           // the person on the other side (landlord for tenants, tenant for landlords)
+  fit: Fit;
+  at: string;               // ISO time of the relevant like
+  status: 'waiting' | 'matched';
+  matchId?: string;
+  note?: string;            // the other side's introNote, only when THEY liked you
+}
+export interface Likes { likedYou: LikeItem[]; youLiked: LikeItem[] }
 
 export interface TenantDeckItem {
   kind: 'listing';
@@ -105,7 +125,7 @@ export interface MatchSummary {
 export type AppEvent =
   | { type: 'match'; match: Match; summary: MatchSummary }
   | { type: 'message'; message: Message }
-  | { type: 'like'; listingId: string; tenantId: string }  // a tenant liked a listing → refresh the landlord deck
+  | { type: 'like'; listingId: string; tenantId: string; by?: Role }  // a like landed. by='tenant' (default) → delivered to the landlord; by='landlord' → delivered to the tenant (NEW)
   | { type: 'reset' };                                      // demo data was reset → refetch everything
 ```
 
@@ -165,7 +185,59 @@ markRead(matchId: string, userId: string): Promise<void>
 
 // realtime
 subscribe(userId: string, handler: (e: AppEvent) => void): () => void   // returns unsubscribe
+
+// NEW: profile, likes, AI fit
+saveProfile(id: string, patch: Partial<Pick<Profile, 'name' | 'bio' | 'avatarUrl' | 'occupation' | 'introNote'>>): Promise<void>
+getLikes(userId: string, opts?: { listingId?: string }): Promise<Likes>   // landlord can filter by listing; sorting is done in the UI
+getAiFit(input: { tenantId: string; listingId: string; viewer: Role }): Promise<Fit>   // cached; never throws — falls back to the rule fit
 ```
+
+### Likes rules (`engine.likesFor`)
+**Tenant**
+- `likedYou`: listings with a **landlord** swipe `right` on this tenant where the tenant has **no** swipe yet. `note` is the landlord's `introNote`.
+- `youLiked`: listings with a **tenant** swipe `right`. The status is `matched` if a match exists, otherwise `waiting`. Never reveal a landlord pass.
+
+**Landlord** (across all their listings, or one listing if `opts.listingId` is given)
+- `likedYou`: tenants with a **tenant** swipe `right` on the listing, where the landlord has no swipe for that pair. `note` is the tenant's `introNote`.
+- `youLiked`: tenants with a **landlord** swipe `right`, marked `matched` or `waiting`.
+
+Liking back from `likedYou` uses the normal `swipe()`, which creates the match instantly. When a landlord likes a tenant, emit `{ type: 'like', by: 'landlord' }` to that tenant so their Likes tab updates live.
+
+### AI fit (`src/app/api/fit/route.ts` + `getAiFit`)
+**Server route** `POST /api/fit` (owner: Coleman). This is the only place the API key is used.
+```ts
+// body
+{ viewer: 'tenant' | 'landlord',
+  tenant: { prefs: TenantPrefs; bio: string; occupation?: string; introNote?: string },
+  listing: Listing,
+  rules: Fit }                                  // the rule-based fit, used as the anchor
+// response: Fit with source: 'ai'
+```
+- **SDK:** `@anthropic-ai/sdk` plus `zod`, using structured outputs (`client.messages.parse` with `output_config: { format: zodOutputFormat(FitSchema) }` from `@anthropic-ai/sdk/helpers/zod`), so we never hand-parse JSON.
+- **Model:** `claude-opus-5-5` with `output_config.effort: "low"` (it's a small, latency-sensitive judgement) and `max_tokens: 2000`.
+  - **Don't send** `temperature` or a `thinking` budget; this model rejects both.
+  - If upgrades feel slow on stage, switch to `claude-haiku-5-5`. That's the team's call.
+- **Refusal fallback:** set `fallbacks: "default"` with beta `server-side-fallback-2026-07-01` (use `client.beta.messages.parse` if the installed SDK supports it). Otherwise skip it. Either way, check `stop_reason`: on `refusal`, return the rule fit.
+- **Schema:**
+  ```ts
+  { score: number,       // integer 0–100
+    headline: string,    // ≤ 60 chars
+    reasons: { label: string /* ≤ 24 chars */, ok: boolean }[] }   // 3–4 items
+  ```
+- **Clamp on the server:** `score = clamp(ai.score, rules.score - 15, rules.score + 15)`, limited to the range 0–100. Truncate the headline to 60 chars and keep at most 4 reasons.
+- **Prompt (system):** "You assess how well a rental listing fits a renter in Ireland. You get structured preferences, free text (the renter's bio and note, and the listing's description and amenities), and a rule-based score. Start from the rule score and adjust only for what the rules can't see in the free text, by at most 15 points. Write `headline` for the {viewer}: to a tenant, about the home ('Garden and quiet street, ideal for you'); to a landlord, about the renter ('Works nights, so your quiet street suits her'). Reasons are short, concrete chips, positive first. Never invent facts not present in the input. Plain Irish/UK English, no emoji."
+- **Timeout:** 6s using the SDK's per-request `timeout` option. On any error, return `rules` unchanged with `source: 'rules'`.
+- **Env:** `ANTHROPIC_API_KEY`, set in `.env.local` and in Vercel (server-only; never `NEXT_PUBLIC_`). If it's missing, the route returns the rule fit immediately.
+
+**Client (`getAiFit` in the adapter):**
+- Cache in localStorage under `homatch:aifit:v1:{viewer}:{tenantId}:{listingId}:{hash(prefs+bio+note)}`.
+- Deduplicate requests that are already in flight.
+- Read `seed.aiFits` first, so the demo pair works offline.
+
+**UI flow (Discover):**
+- When the deck loads, call `getAiFit` for the top 3 items, and for the next one after each swipe.
+- When a result arrives, replace that item's `fit` with `setData(prev => …)`, matching by id.
+- Cards render `fit.headline` and a sparkle when `fit.source === 'ai'`.
 
 ## Component contracts
 C0 creates a stub for each of these, with exactly these props. Owners replace the stubs with the real components and **keep the props**. You may add optional props, but never change existing ones.
@@ -191,7 +263,9 @@ DeckControls: { onPass: () => void; onLike: () => void; onRewind?: () => void; d
 ListingCard:   { listing: Listing; fit: Fit; onOpenDetail: () => void }
 TenantCard:    { tenant: Tenant; fit: Fit; likedYou: boolean; onOpenDetail: () => void }
 DividerCard:   { onContinue: () => void }
-FitPill:       { score: number }
+FitPill:       { score: number; ai?: boolean }          // NEW optional: ai → sparkle
+// ListingCard/TenantCard also render fit.headline when present (no prop change: it's on Fit)
+LikeTile:      { item: LikeItem; viewerRole: Role; onOpen: () => void }   // NEW (Jazz): grid tile on /likes
 ListingDetail: { listing: Listing; owner: Profile; fit: Fit; open: boolean; onClose: () => void; onPass?: () => void; onLike?: () => void }
 TenantDetail:  { tenant: Tenant; fit: Fit; open: boolean; onClose: () => void; onPass?: () => void; onLike?: () => void }
 
@@ -205,7 +279,9 @@ Chip:       { children: React.ReactNode; selected?: boolean; onToggle?: () => vo
 Sheet:      { open: boolean; onClose: () => void; title?: string; children: React.ReactNode }
 Avatar:     { src: string; alt: string; size?: number; ring?: boolean }
 PhoneFrame: { children: React.ReactNode }
-BottomNav:  { matchesBadge?: number }
+BottomNav:  { matchesBadge?: number; likesBadge?: number }   // NEW: 4 tabs (Discover · Likes · Matches · Profile)
+Segmented:  { options: { value: string; label: string; count?: number }[]; value: string; onChange: (v: string) => void }   // NEW (Kamsi K1b): Likes tabs, sort
+RangeSlider:{ min: number; max: number; step: number; value: [number, number]; onChange: (v: [number, number]) => void; format?: (n: number) => string }   // NEW (Kamsi K1b): onboarding budget
 
 // components/chat  (Kamsi)
 ChatThread: { messages: Message[]; meId: string }

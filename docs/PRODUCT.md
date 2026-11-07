@@ -3,7 +3,10 @@
 ## Pitch
 Renting is a one-way street. Tenants send dozens of enquiries into the void, and landlords dig through an inbox of strangers. **Homatch makes it two-way.** Tenants swipe on homes and landlords swipe on tenants. Both sides only talk once both have said yes.
 
-**What sets us apart:** landlords don't just wait for likes. Their deck starts with **renters who liked their place**, then flows into a **discovery pool** of renters whose preferences fit the listing. A landlord never hits an empty screen.
+**What sets us apart:**
+1. Landlords don't just wait for likes. Their deck starts with **renters who liked their place**, then flows into a **discovery pool** of renters whose preferences fit the listing. A landlord never hits an empty screen.
+2. **AI fit** reads what people actually wrote, not just the numbers. "Works nights, so the quiet street suits her" is something a budget filter can't tell you.
+3. **Both sides see who liked them.** One tap on the Likes tab turns a like into an instant match.
 
 ## Roles
 - **Tenant**: someone looking for a place. Sets preferences once and swipes on listings.
@@ -23,15 +26,30 @@ A match can complete from either side. If the landlord swipes right on a renter 
 ### 0. `/demo`: persona picker
 Our stand-in for login. It shows a grid of seeded personas with a role tag (Tenant/Landlord) and a **Reset demo** button. Picking a persona goes to `/discover`, or to onboarding if that persona hasn't finished it.
 
-### 1. Tenant onboarding (`/onboarding/tenant`)
-One question per screen, big tappable chips, a progress bar at the top, and Back/Continue. Steps slide horizontally.
-1. Budget: a dual-handle range slider with live values
-2. Areas: multi-select chips across Ireland, grouped under region headings (Dublin, Cork, Galway, …), plus an "Anywhere in {region}" chip for each region
-3. Move-in date and lease length (chips: 6 / 12 / 18+ months)
-4. Household: number of people, pets (yes/no), smoker (yes/no)
-5. Photo and a one-line bio ("Product designer, quiet, plants everywhere")
+### 1. Tenant onboarding (`/onboarding/tenant`) (P0)
+It's **clean and almost typing-free: you tap to select, and drag sliders.** Visual references go in `docs/design/references/onboarding/`. If they've landed, match them.
 
-It ends on a short "Finding homes that fit you…" moment, then the deck.
+**Pattern**
+- One question per screen, with a thin progress bar at the top.
+- Big tappable chips and cards, at least 44px tall.
+- Single-select questions **auto-advance** after a short beat (about 250ms), so the tap feels confirmed.
+- Multi-select questions have a Continue button that's disabled until something is chosen.
+- Steps slide horizontally (forward slides left). Back is a top-left chevron.
+- Optional steps have "Skip".
+
+**Steps**
+1. **Who's moving?** Just me / Me + partner / Friends sharing / Family. Single-select; this sets `householdSize`.
+2. **Budget:** a dual-handle range slider (€500–€4,000 in €50 steps). Live values sit above the handles, with a hint like "Typical 2-bed in Dublin: €2,000–2,600".
+3. **Where?** Chips grouped under region headings (Dublin, Cork, Galway, …), each region with an "Anywhere in {region}" chip. Multi-select.
+4. **When?** Move-in chips: ASAP / This month / Next month / Pick a date. Then lease length chips: 6 / 12 / 18+ months.
+5. **Bedrooms:** Room in a share / 1 / 2 / 3+. Single-select.
+6. **Lifestyle:** two yes/no toggles, pets and smoker.
+7. **Your note to landlords** (optional): a 140-character text field with tappable starters, like "Quiet professional, home most evenings" or "Long-term renter, great references". This is the **intro note** (see Likes).
+8. **Photo:** choose from a few preset avatars (it's a demo, so no upload).
+
+It ends on a short "Finding homes that fit you…" moment (an AI sparkle and 3 house thumbnails shuffling), then the deck.
+
+All of this saves through `saveTenantPrefs()` and `saveProfile()`. The same controls get reused on the Profile screen to edit preferences.
 
 ### 2. Landlord onboarding / create listing (`/onboarding/landlord`) (P2)
 A stepper: photos (pick from a seeded gallery for the demo), basics (title, area, beds/baths, furnished), rent and dates, rules (pets, smoking), and description. Stretch goal: an "AI write my description" button.
@@ -51,6 +69,12 @@ A stepper: photos (pick from a seeded gallery for the demo), basics (title, area
 - `FitPill` and reason chips, computed against the active listing
 - After the last liked-you card comes a `DividerCard`: *"That's everyone who liked this place. Here are renters who'd fit it."* Discover cards follow.
 
+**AI fit on cards:** the card first shows the instant rule-based score, then quietly upgrades to the AI score:
+- A small sparkle appears in the FitPill (e.g. "✦ 94% fit"), and a one-line **headline** fades in above the reason chips.
+  - Tenant view: "Quiet street, garden for your plants"
+  - Landlord view: "Works nights, so your quiet street suits her"
+- If the AI is slow or offline, the rule-based score simply stays. Nothing ever waits on AI. See **AI fit** below.
+
 **Empty state:** an illustration or icon plus copy. Tenant: "You've seen every home that fits. Widen your budget or areas?" with a button to Profile. Landlord: "No more renters right now. We'll let you know when someone likes this place."
 
 ### 4. Detail sheets
@@ -63,6 +87,37 @@ It's global, mounted in `(app)/layout.tsx` and triggered by the API `match` even
 - Two circles that slide in from the sides and overlap: the tenant's photo and the listing's first photo
 - The headline "It's a match", with the subline "{Name} and {Listing title}"
 - A primary button, **Send a message** (goes to the chat), and a secondary one, **Keep swiping**
+
+### 5b. Likes (`/likes`) (P0)
+Who's interested in you, and who you're waiting on. It has two tabs in a segmented control at the top, each showing its count: **Liked you (3)** and **You liked (5)**.
+
+**Tenant view**
+- **Liked you:** homes whose landlord has said yes to you, but that you haven't swiped yet.
+  - Each item shows the home's photo, rent, title, "{Landlord} likes you", and the fit.
+  - Tapping it opens `ListingDetail` with Pass and Interested. **Interested is an instant match**: the overlay fires straight away, because the landlord already said yes.
+- **You liked:** homes you swiped right on.
+  - Each one is either **Waiting** or **Matched**. Matched items show a "Message" button that opens the chat.
+  - We never show "the landlord passed". It just stays as Waiting, which is kinder and the industry norm.
+
+**Landlord view**
+- **Liked you:** renters who liked any of your listings, but whom you haven't swiped for that listing yet.
+  - A chip row filters by listing.
+  - Tapping a renter opens `TenantDetail` with Pass and Yes. **Yes is an instant match.**
+- **You liked:** renters you said yes to, marked **Waiting** or **Matched**.
+
+**Both views**
+- A **sort** control (a small pill that opens a sheet): Newest (the default), Best fit, and Price (tenant: low to high) or Budget (landlord: high to low).
+- A **2-column grid** of photo tiles, with the name or rent, a fit chip, and a status chip.
+- The **intro note** shows on the tile as a one-line quote, when the other person has written one.
+- Empty states:
+  - Liked you: "No likes yet. Keep swiping, people see you when you like them."
+  - You liked: "Homes you like will wait here."
+- **Live updates:** a new like animates into Liked you, and the Likes tab in the nav shows a badge with the Liked you count.
+
+### Intro note (P1)
+A short personal note (up to 140 characters) on your profile. Tenants write one to landlords during onboarding, and landlords write one to renters on their Profile.
+
+**Who sees it:** only people **you've liked**. It shows on their Likes tile, in the detail sheet ("A note from Maya: …"), and as a quoted card at the top of a new chat. It's a personalised message without anyone having to send one.
 
 ### 6. Matches (`/matches`)
 - **A New matches row**: a horizontal scroll of avatars (tenants see the listing photo, landlords see the tenant photo) for matches with no messages yet
@@ -85,7 +140,28 @@ It's global, mounted in `(app)/layout.tsx` and triggered by the API `match` even
 - Landlord: a "My listings" list with like counts. "Add listing" goes to landlord onboarding.
 
 ### Bottom nav
-Discover · Matches (with a badge for unread or new matches) · Profile. The active tab gets a sliding indicator.
+Four tabs: **Discover · Likes** (badge: the Liked you count) **· Matches** (badge: unread messages or new matches) **· Profile**. The active tab gets a sliding indicator.
+
+## AI fit (P0)
+The number on every card is real. The **rule-based score** (`score.ts`) is instant and always available. **AI fit** refines it using what rules can't read: the renter's bio and intro note, and the listing's description and amenities.
+
+**How it works**
+- A server route, `POST /api/fit`, calls Claude with the tenant's preferences, bio, note and household, plus the listing and the rule-based score. It returns a `Fit` with `source: 'ai'`: a score, a headline, and 3–4 reasons.
+- **The AI may move the rule score by at most ±15 points.** That keeps it sensible and consistent with the deck's ordering and filters, which stay rule-based.
+- The headline is written for whoever is looking:
+  - To a tenant: "Garden and quiet street, ideal for you"
+  - To a landlord: "Long-term renter with references, wants exactly this"
+- The client asks for the AI fit of the **top 3 cards** when the deck loads, then for the next card after each swipe, and caches every result per (tenant, listing, viewer). Cards upgrade in place.
+- **Fallback:** a timeout (6s), an error, a refusal or no API key all keep the rule-based fit. The demo pair (Maya × Sunny 2-bed, in both directions) also ships with a **pre-computed AI fit in the seed**, so the key moment works even offline.
+
+**Where it shows:** the FitPill sparkle and headline on cards, the "Why it fits" section in detail sheets, and Likes tiles.
+
+## Decisions
+- **No Explore tab, no "Top houses" tab (for now).** Tinder's Explore exists because it has millions of profiles and many dating intents. Renting has one intent, which onboarding already captures, and our seed has 12 homes, so an Explore grid would look empty. Every extra tab is screens we'd need to design and polish today. Instead:
+  - **Quick filters on Discover (P2):** a scrollable chip row above the deck: All · Under €1,500 · Pets OK · House shares · Available now · Near me. Each one filters the same deck. It's cheap, uses the existing engine, and still feels like categories.
+  - **"Top pick" badge (P2):** cards with AI fit of 90 or more get a small "Top pick" label. That gives us "top houses" without a separate screen.
+  - Revisit Explore only after the demo, with real inventory.
+- **Likes is its own tab**, separate from Matches. It answers "who's interested?", while Matches answers "who am I talking to?". Tinder splits them the same way, and it's also our clearest differentiator in the demo.
 
 ## Interaction spec
 These are the shared motion values. Use the motion tokens in `tokens.css`, which should match these.
@@ -118,11 +194,13 @@ These are the shared motion values. Use the motion tokens in `tokens.css`, which
 **Setup:** a laptop with two browser windows side by side. Left: tenant **Maya**. Right: landlord **David**, with the listing *"Sunny 2-bed with garden"* (Rathmines, Dublin 6, €2,150/mo) active. It has 3 pre-seeded likes. If Supabase is live, use a phone for Maya instead, which is more impressive.
 
 1. **Hook (15s):** "Renting is a one-way street. Homatch makes it two-way."
-2. **Tenant (40s):** Show Maya's preferences (already completed). Swipe left on one home. Tap a card to show the detail transition and fit reasons. Close it, then swipe right on David's listing.
+2. **Tenant (40s):** Show Maya's deck, with the AI headline on the top card ("Garden and quiet street, ideal for you"). Swipe left on one home. Tap a card to show the detail transition and the AI "Why it fits". Close it, then swipe right on David's listing.
+   - *Optional (20s): open Sam's onboarding and tap through four steps to show how quick it is.*
 3. **Landlord (30s):** David's deck now shows Maya at the top with "Likes your place" and her fit reasons. David swipes right, and **"It's a match" appears on both screens at once.**
 4. **Chat (20s):** Maya taps the quick reply "Could I view it this week?", and it appears on David's side instantly. David replies.
 5. **What sets us apart (30s):** David keeps swiping, reaches the divider "That's everyone who liked this place…", and continues into **Discover**: renters who fit, so he's never stuck. He swipes right on one.
-6. **Close (15s):** "Built today with Devin by Jazz, Kamsi, and Coleman."
+6. **Likes (20s):** Maya opens **Likes → Liked you** and sees a landlord who already likes her. She taps Interested, and it's an instant match.
+7. **Close (15s):** "Built today with Devin by Jazz, Kamsi, and Coleman."
 
 **Backup:** at feature freeze, record a clean run of this script. If the network or the demo dies, play the video.
 
@@ -130,6 +208,7 @@ These are the shared motion values. Use the motion tokens in `tokens.css`, which
 Real auth, payments, identity verification, maps, push notifications, moderation, and real image upload (pick from the seeded gallery). Don't build these. Fake them in seed data if the story needs them.
 
 ## Open questions for the team
-- **The "page where you see your matches"** from the original brief: we've interpreted it as the **Matches** screen (new matches plus conversations). The part about *"completing someone that you like … with a random person"* didn't come through clearly in the dictation. Possible meanings: (a) a tenant can see **who liked them** (a "Likes you" grid), or (b) a "send a note with your like" action (a super-like). Decide which, if either, and add it as a P2 task.
+- ~~Who liked you / a note with your like~~ **Decided:** both. The **Likes tab** (Liked you / You liked) and the **intro note** on your profile.
+- **AI fit model:** the spec uses `claude-opus-5-5` at low effort. If card upgrades feel too slow on stage, switching to `claude-haiku-5-5` is a one-line change. That's the team's call.
 - ~~City and currency~~ **Decided:** all of Ireland, prices in euros. See `CONTRACTS.md` → Config.
 - **Name:** we're going with Homatch unless someone objects.
