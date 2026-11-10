@@ -33,7 +33,6 @@ export default function DemoPage() {
       <header className="px-5 pt-8 pb-4">
         <p className="text-title font-extrabold tracking-tight text-accent">homatch</p>
         <h1 className="mt-4 text-display font-bold">Who are you today?</h1>
-        <p className="mt-2 text-body text-ink-muted">Demo mode. Open a second tab to be the other side.</p>
       </header>
 
       <section className="space-y-2 px-4">
